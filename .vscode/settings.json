@@ -1,0 +1,24 @@
+{
+    "python.formatting.provider": "yapf",
+    "python.formatting.yapfArgs": [
+        "--style={column_limit=128}"
+    ],
+    "cSpell.words": [
+        "Antialiasing",
+        "appname",
+        "bootloader",
+        "codesign",
+        "datas",
+        "desktopid",
+        "hiddenimports",
+        "hooksconfig",
+        "hookspath",
+        "licence",
+        "noarchive",
+        "pathex",
+        "Pixmap",
+        "pyqt",
+        "traceback",
+        "zipfiles"
+    ]
+}
