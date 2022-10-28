@@ -16,6 +16,7 @@ class ServerData:
 
 class ActionType(Enum):
     TIMEOUT = "timeout"
+    ENTER = "enter"
 
 class ProtocolDataEncoding(Enum):
     UTF8 = "utf8"

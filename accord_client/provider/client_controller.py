@@ -1,7 +1,11 @@
+import json
+import sys
+
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtNetwork import QAbstractSocket, QHostAddress, QTcpSocket
 
 from accord_client import globalSettings
+from accord_client.helper import data_builder as DataBuilder
 from accord_client.model import AccordServer
 from accord_client.provider import protocol_controller as ProtocolController
 
@@ -55,7 +59,18 @@ class ClientController(QObject):
     def enter(self, server: AccordServer.ServerData):
         # self.disconnect()
         self.connect()
-        # self._socket.writeData(b'{action:enter}')
+        self.request(AccordServer.ActionType.ENTER)
 
     def consume(self, header: AccordServer.ProtocolDataHeader, body: bytes):
         print(body.decode(), header.Action)
+
+    def request(self, action: AccordServer.ActionType):
+        body = '进入服务器'.encode('utf-8')
+        header = AccordServer.ProtocolDataHeader(Action=action,
+                                                 ContentEncoding=AccordServer.ProtocolDataEncoding.UTF8,
+                                                 ContentLength=len(body),
+                                                 ContentMime="application/json")
+        headerBuffer = json.dumps(header, cls=DataBuilder.ProtocolDataHeaderEncoder).encode("utf-8")
+
+        fixedLength = len(headerBuffer).to_bytes(4, sys.byteorder, signed=False)
+        self._socket.write(fixedLength + headerBuffer + body)
