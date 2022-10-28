@@ -1,17 +1,17 @@
-import sys
-from PyQt6.QtWidgets import QMainWindow, QMessageBox, QApplication
-from PyQt6.QtCore import Qt, QModelIndex
-
+from PyQt6.QtCore import QModelIndex, Qt
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
 from requests.exceptions import Timeout
 
-from accord_client import IconsMap, __appname__ as AppName
-from accord_client.controller.server_controller import ServerController
-from accord_client.helper import data_builder as DataBuilder, icon_builder as IconBuilder
+from accord_client import IconsMap
+from accord_client import __appname__ as AppName
+from accord_client.provider import network_service as NetworkService
+from accord_client.provider import client_controller as ClientController
+from accord_client.helper import data_builder as DataBuilder
+from accord_client.helper import icon_builder as IconBuilder
 from accord_client.model import AccordServer
 from accord_client.ui import ui_main
-from accord_client.controller import network_service as NetworkService
 
-conn = ServerController()
+conn = ClientController.ClientController()
 
 
 class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
@@ -27,6 +27,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         isServersDataReady: bool = False
         while (not isServersDataReady):
             isServersDataReady = self.updateServers()
+
         self.connectSlot()
 
     def connectSlot(self):

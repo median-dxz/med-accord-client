@@ -29,6 +29,16 @@ if (not globalSettings.contains("host")):
     globalSettings.setValue("host", "127.0.0.1")
 
 if (not globalSettings.contains("port")):
-    globalSettings.setValue("port", "4545")
+    globalSettings.setValue("port", 4545)
+
+globalSettings.endGroup()
+
+globalSettings.beginGroup("AccordServer")
+
+if (not globalSettings.contains("host")):
+    globalSettings.setValue("host", "127.0.0.1")
+
+if (not globalSettings.contains("port")):
+    globalSettings.setValue("port", 9980)
 
 globalSettings.endGroup()

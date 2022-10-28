@@ -16,15 +16,3 @@ def getServerList():
 
     result: list[dict] = res.json()
     return result
-
-
-def JoinServer():
-    pass
-
-
-def SignInServer():
-    pass
-
-
-def SignOutServer():
-    pass

@@ -4,7 +4,7 @@ import sys
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 import accord_client
-from accord_client.controller.single_instance import SingleInstance
+from accord_client.provider.single_instance import SingleInstance
 from accord_client.helper.icon_builder import getImageQIcon
 from accord_client.window.main_window import AccordMainWindow
 

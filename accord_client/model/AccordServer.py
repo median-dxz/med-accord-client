@@ -14,11 +14,19 @@ class ServerData:
     actualName: str
     icon: str
 
-class ServerAction(Enum):
-    Accept = 1
-    Enter = 2
-    Leave = 3
+class ActionType(Enum):
+    TIMEOUT = "timeout"
+
+class ProtocolDataEncoding(Enum):
+    UTF8 = "utf8"
+    BINARY = "binary"
     
+@dataclass
+class ProtocolDataHeader:
+    ContentLength: int
+    ContentMime: str
+    ContentEncoding: ProtocolDataEncoding
+    Action: ActionType
 
 class ServerDataModel(QAbstractListModel):
     serverList: list[ServerData] = []
