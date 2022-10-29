@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import typing
 
@@ -9,14 +9,15 @@ from accord_client.helper import icon_builder as IconBuilder
 
 @dataclass
 class ServerData:
-    hash: str
-    showName: str
-    actualName: str
-    icon: str
+    hash: str = field(default="")
+    showName: str = field(default="")
+    actualName: str = field(default="")
+    icon: str = field(default="")
 
 class ActionType(Enum):
     TIMEOUT = "timeout"
     ENTER = "enter"
+    LEAVE = "leave"
 
 class ProtocolDataEncoding(Enum):
     UTF8 = "utf8"

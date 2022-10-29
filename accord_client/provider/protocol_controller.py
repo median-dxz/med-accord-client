@@ -9,18 +9,13 @@ from accord_client.helper import data_builder as DataBuilder
 
 
 class ProtocolData(QObject):
-
-    fixedLength: int
-    header: typing.Optional[AccordServer.ProtocolDataHeader]
-    body: typing.Optional[bytearray]
-
     readyConsume = pyqtSignal(AccordServer.ProtocolDataHeader, bytearray)
 
     def __init__(self, chunk) -> None:
         super().__init__()
-        self.fixedLength = 0
-        self.header = None
-        self.body = None
+        self.fixedLength: int = 0
+        self.header: typing.Optional[AccordServer.ProtocolDataHeader] = None
+        self.body: typing.Optional[bytearray] = None
         self.chunk = chunk
         self.consumed = False
 

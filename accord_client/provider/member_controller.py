@@ -1,10 +1,9 @@
 class MemberController:
     _instance = None
-    name = None
-    avatar = None
 
     def __init__(self):
-        pass
+        name = None
+        avatar = None
 
     def __new__(cls, *args, **kw):
         if cls._instance is None:

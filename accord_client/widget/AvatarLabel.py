@@ -9,13 +9,12 @@ from accord_client import IconsMap
 class RoundButton(QPushButton):
 
     radius = 24
-    avatar: QPixmap
+    avatar: QPixmap = QPixmap(IconsMap.server_default.value)
 
     def __init__(self, parent) -> None:
         super(RoundButton, self).__init__(parent=parent)
         size = QSize(self.radius * 2, self.radius * 2)
         self.setFixedSize(size)
-        self.avatar = QPixmap(IconsMap.server_default.value)
         self.setStyleSheet(f"""
 RoundButton {{
     border-radius: 9px;

@@ -4,11 +4,12 @@ from requests.exceptions import Timeout
 
 from accord_client import IconsMap
 from accord_client import __appname__ as AppName
-from accord_client.provider import network_service as NetworkService
-from accord_client.provider import client_controller as ClientController
 from accord_client.helper import data_builder as DataBuilder
 from accord_client.helper import icon_builder as IconBuilder
+from accord_client.helper.signal_waiter import SignalWaiter
 from accord_client.model import AccordServer
+from accord_client.provider import client_controller as ClientController
+from accord_client.provider import network_service as NetworkService
 from accord_client.ui import ui_main
 
 conn = ClientController.ClientController()
@@ -31,8 +32,8 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.connectSlot()
 
     def connectSlot(self):
-        self.serversList.doubleClicked.connect(self.handelListEnterServer)
-        self.buttonServerEnter.clicked.connect(self.handelButtonEnterServer)
+        self.serversList.doubleClicked.connect(self.serverListDoubleClicked)
+        self.buttonServerEnter.clicked.connect(self.buttonServerEnterClicked)
 
     def updateServers(self) -> bool:
         dialog = QMessageBox(self)
@@ -71,20 +72,24 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
     def closeEvent(self, ev):
         ev.accept()
 
-    def handelListEnterServer(self, curIndex: QModelIndex):
-        if (curIndex.isValid()):
-            serverData: AccordServer.ServerData = self.serversList.model().data(curIndex, Qt.ItemDataRole.UserRole)
-            conn.enter(serverData)
-        else:
-            dialog = QMessageBox(self)
-            dialog.setText("未选择正确的服务器")
-            dialog.exec()
+    def serverListDoubleClicked(self, curIndex: QModelIndex):
+        self.handleEnterServer(curIndex.isValid(), curIndex)
 
-    def handelButtonEnterServer(self):
+    def buttonServerEnterClicked(self):
         indexes = self.serversList.selectedIndexes()
-        if (len(indexes) > 0):
-            serverData: AccordServer.ServerData = self.serversList.model().data(indexes[0], Qt.ItemDataRole.UserRole)
-            conn.enter(serverData)
+        self.handleEnterServer(len(indexes) > 0, indexes[0])
+
+    def handleEnterServer(self, valid: bool, curIndex: QModelIndex):
+        if (valid):
+            serverData: AccordServer.ServerData = self.serversList.model().data(curIndex, Qt.ItemDataRole.UserRole)
+            self.promise = SignalWaiter(self)
+            promise = self.promise
+            promise.setCallback(lambda: conn.enter(serverData))
+            if (serverData.hash != conn.serverData.hash) & (conn.serverData.hash != ""):
+                promise.setSignal(conn.acceptLeave)
+                promise.run(lambda: conn.leave())
+            elif conn.serverData.hash == "":
+                promise.run(lambda: {})
         else:
             dialog = QMessageBox(self)
             dialog.setText("未选择正确的服务器")
