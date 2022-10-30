@@ -5,17 +5,17 @@ import os
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon, QPixmap
 
-from accord_client import IconsMap, baseDir
+from accord_client import baseDir
 
 
-def getImageQIcon(path, scaled=[256, 256]) -> QIcon:
+def getQPixmapFromPath(path, scaled=[256, 256]) -> QPixmap:
     filePath = os.path.join(baseDir, "assets", path)
     pix = QPixmap(filePath)
-    icon = QIcon(pix.scaled(QSize(scaled[0], scaled[1])))
-    return icon
+    pix = pix.scaled(QSize(scaled[0], scaled[1]))
+    return pix
 
 
-def getBase64QIcon(data: str, scaled=[32, 32]) -> QIcon:
+def getQPixmapFromBase64(data: str, default: str, scaled=[24, 24]) -> QPixmap:
     try:
         byteData = base64.b64decode(data)
     except binascii.Error:
@@ -23,7 +23,6 @@ def getBase64QIcon(data: str, scaled=[32, 32]) -> QIcon:
     pix = QPixmap()
     pix.loadFromData(byteData)  # type: ignore
     if (pix.isNull()):
-        return getImageQIcon(IconsMap.server_default.value, [32, 32])
+        return getQPixmapFromPath(default, scaled)
     else:
-        icon = QIcon(pix.scaled(QSize(scaled[0], scaled[1])))
-        return icon
+        return pix.scaled(QSize(scaled[0], scaled[1]))

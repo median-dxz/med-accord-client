@@ -1,14 +1,10 @@
-from collections import namedtuple
-from typing import Any
 import requests
 
-from accord_client import globalSettings
+import accord_client as Accord
 
 
 def getServerList():
-    globalSettings.beginGroup("ListService")
-    [host, port] = [globalSettings.value("host"), globalSettings.value("port")]
-    globalSettings.endGroup()
+    [host, port] = Accord.getValue("ListService", ["host", "port"])
     res = requests.get(f"http://{host}:{port}/", timeout=1)
 
     if (res.status_code != 200):
@@ -16,3 +12,16 @@ def getServerList():
 
     result: list[dict] = res.json()
     return result
+
+
+def requireHash():
+    [host, port] = Accord.getValue("ListService", ["host", "port"])
+
+    res = requests.get(f"http://{host}:{port}/hash", timeout=1)
+
+    if (res.status_code != 200):
+        raise Exception(f"服务器错误: {res.status_code}")
+
+    result: dict[str, str] = res.json()
+
+    Accord.setValue("UserInfo", [("hash", result.get("hash"))])

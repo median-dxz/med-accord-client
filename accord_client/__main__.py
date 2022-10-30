@@ -1,11 +1,12 @@
 import ctypes
 import sys
 
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 import accord_client
 from accord_client.provider.single_instance import SingleInstance
-from accord_client.helper.icon_builder import getImageQIcon
+import accord_client.helper.icon_builder as IconBuilder
 from accord_client.window.main_window import AccordMainWindow
 
 
@@ -20,12 +21,9 @@ def main():
 
     if instance.isRunning():
         print("An instance is running now!")
-        dialog = QMessageBox(window)
 
-        dialog.setWindowTitle("启动失败")
-        dialog.setText("Accord客户端实例已经运行")
+        dialog = QMessageBox(title="启动失败", text="Accord客户端实例已经运行", icon=QMessageBox.Icon.Warning, parent=window)
         dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
-        dialog.setIcon(QMessageBox.Icon.Warning)
 
         dialog.exec()
         app.exit(0)
@@ -42,7 +40,7 @@ def init_app(app: QApplication):
     app.setDesktopFileName(accord_client.__desktopid__)
     app.setOrganizationDomain(accord_client.__domain__)
     print("baseDir: " + accord_client.baseDir)
-    app.setWindowIcon(getImageQIcon(accord_client.IconsMap.logo.value))
+    app.setWindowIcon(QIcon(IconBuilder.getQPixmapFromPath(accord_client.IconsMap.logo.value)))
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(accord_client.__appid__)
 
 

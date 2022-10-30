@@ -1,26 +1,31 @@
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtBoundSignal
+from enum import Enum
 
 
 class SignalWaiter(QObject):
 
-    def __init__(self, parent) -> None:
+    class State(Enum):
+        PENDING = ...
+        FULFILLED = ...
+
+    def __init__(self, signal: pyqtBoundSignal, executor) -> None:
         super().__init__()
+        self.state = self.State.PENDING
+        self.signal = signal
 
-    def setCallback(self, cb):
-        self._callback = cb
+        self.signal.connect(self.resolver)
+        self.callback = None
+        executor()
 
-    def run(self, fun):
-        if (hasattr(self, "signal")):
-            fun()
-        else:
-            self._callback()
-            self.deleteLater()
+    def then(self, callback):
+        if self.state == self.State.PENDING:
+            self.callback = callback
+        elif self.state == self.State.FULFILLED:
+            callback()
 
     def resolver(self):
-        self._callback()
+        self.state = self.State.FULFILLED
+        if not self.callback is None:
+            self.callback()
         self.signal.disconnect(self.resolver)
         self.deleteLater()
-
-    def setSignal(self, signal: pyqtBoundSignal):
-        self.signal = signal
-        signal.connect(self.resolver)

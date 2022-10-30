@@ -221,28 +221,33 @@
       </property>
       <item>
        <widget class="QFrame" name="userInfo">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <layout class="QHBoxLayout" name="horizontalLayout_userInfo">
          <item>
-          <widget class="QLabel" name="label_2">
+          <widget class="QLineEdit" name="textInputName"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="buttonRequireHash">
            <property name="text">
-            <string>TextLabel</string>
+            <string>更新hash</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit"/>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton">
-           <property name="text">
-            <string>PushButton</string>
+          <widget class="QLabel" name="labelHash">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label">
+           <property name="minimumSize">
+            <size>
+             <width>72</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="text">
-            <string>TextLabel</string>
+            <string># </string>
            </property>
           </widget>
          </item>

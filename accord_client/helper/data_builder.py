@@ -1,5 +1,7 @@
 import json
-from accord_client.model.AccordServer import (ActionType, ProtocolDataEncoding, ProtocolDataHeader, ServerData)
+
+from accord_client.model.AccordServer import *
+from accord_client.model.AccordAction import *
 
 
 def server(data: dict):

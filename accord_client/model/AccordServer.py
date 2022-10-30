@@ -5,7 +5,10 @@ import typing
 from PyQt6.QtCore import QAbstractListModel, QModelIndex
 from PyQt6.QtCore import Qt
 
+import accord_client as Accord
+
 from accord_client.helper import icon_builder as IconBuilder
+from accord_client.model import AccordAction
 
 @dataclass
 class ServerData:
@@ -13,11 +16,6 @@ class ServerData:
     showName: str = field(default="")
     actualName: str = field(default="")
     icon: str = field(default="")
-
-class ActionType(Enum):
-    TIMEOUT = "timeout"
-    ENTER = "enter"
-    LEAVE = "leave"
 
 class ProtocolDataEncoding(Enum):
     UTF8 = "utf8"
@@ -28,7 +26,8 @@ class ProtocolDataHeader:
     ContentLength: int
     ContentMime: str
     ContentEncoding: ProtocolDataEncoding
-    Action: ActionType
+    Action: AccordAction.ActionType
+
 
 class ServerDataModel(QAbstractListModel):
     serverList: list[ServerData] = []
@@ -44,7 +43,7 @@ class ServerDataModel(QAbstractListModel):
             case Qt.ItemDataRole.ToolTipRole:
                 return f"{value.showName} - {value.actualName}#{value.hash}"
             case Qt.ItemDataRole.DecorationRole:
-                return IconBuilder.getBase64QIcon(value.icon)
+                return IconBuilder.getQPixmapFromBase64(value.icon, Accord.IconsMap.server_default.value)
             case Qt.ItemDataRole.UserRole:
                 return value
             case _:
