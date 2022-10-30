@@ -80,7 +80,7 @@ class MembersListModel(QAbstractListModel):
             case Qt.ItemDataRole.ToolTipRole:
                 return f"{value.name}"
             case Qt.ItemDataRole.DecorationRole:
-                return IconBuilder.getQPixmapFromBase64(value.avatar, Accord.IconsMap.avatar_default.value, [18, 18])
+                return IconBuilder.getQPixmapFromBase64(value.avatar, Accord.IconsMap.avatar_default.value, [24, 24])
             case Qt.ItemDataRole.UserRole:
                 return value
             case _:

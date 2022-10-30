@@ -29,9 +29,8 @@ class AvatarLabel(QLabel):
         self.setStyleSheet(StyleSheet)
 
     def setAvatar(self, pixmap: QPixmap):
-        if (not pixmap is None):
-            self.avatar = pixmap
+        if not pixmap is None:
+            self.avatar = pixmap.scaled(self.size())
         else:
-            self.avatar = IconBuilder.getQPixmapFromPath(IconsMap.avatar_default.value)
-        self.avatar = self.avatar.scaled(self.size())
+            self.avatar = IconBuilder.getQPixmapFromPath(IconsMap.avatar_default.value, self.size())
         self.setPixmap(self.avatar)

@@ -44,4 +44,4 @@ class MemberController(QObject):
         self.data.name = name
 
     def getAvatarPixmap(self):
-        return IconBuilder.getQPixmapFromBase64(self.getAvatar(), Accord.IconsMap.avatar_default.value, [48, 48])
+        return IconBuilder.getQPixmapFromBase64(self.getAvatar(), Accord.IconsMap.avatar_default.value, [36, 36])
