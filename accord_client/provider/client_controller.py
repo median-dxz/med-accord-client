@@ -14,11 +14,13 @@ from accord_client.provider import protocol_controller as ProtocolController
 
 user = MemberController.MemberController()
 
+
 class ClientController(QObject):
     _instance = None
 
     emitDisconnected = pyqtSignal()
-
+    emitReceiveCtrlMsg = pyqtSignal(str, str)
+    emitUpdateMembersList = pyqtSignal(list)
 
     def __init__(self) -> None:
         super().__init__()
@@ -54,7 +56,7 @@ class ClientController(QObject):
         self._socket.connectToHost(QHostAddress(host), port)
 
         self.protocolData.readyConsume.connect(self.consume)
-        
+
     def disconnected(self):
         print(f"[Accord]: Close Connection")
         self.init()
@@ -71,39 +73,49 @@ class ClientController(QObject):
 
     def leave(self):
         # print(self._socket.state())
-        if (self.serverData.hash == ""):
+        if self.serverData.hash == "":
             return
         self.request(Action.ActionType.LEAVE)
         self._socket.disconnectFromHost()
 
     def enter(self, data: ServerData):
         self.serverData = data
-        self.promise = SignalWaiter(self._socket.connected,self.connect)  # type: ignore
+        self.promise = SignalWaiter(self._socket.connected, self.connect)  # type: ignore
         self.promise.then(lambda: self.request(Action.ActionType.ENTER))
 
     def consume(self, header: ProtocolDataHeader, body: bytes):
+        match header.Action:
+            case Action.ActionType.UPDATE_MEMBERS:
+                self.emitUpdateMembersList.emit(DataBuilder.update_members_list(json.loads(body.decode())))
+            case _:
+                self.emitReceiveCtrlMsg.emit(body.decode(), header.Action.value)
         print(body.decode(), header.Action)
 
     def request(self, action: Action.ActionType):
-        body = b''
-        content = ''
+        body = b""
+        content = ""
         match action:
             case Action.ActionType.ENTER:
                 content = json.dumps(
-                        Action.ActionEnter(
-                            serverHash=self.serverData.hash,
-                            memberHash=user.getMemberHash(),
-                            avatar=user.getAvatar(),
-                            name=user.getName()), 
-                        cls=Action.AccordActionEncoder)
+                    Action.ActionEnter(
+                        serverHash=self.serverData.hash,
+                        memberHash=user.getMemberHash(),
+                        avatar=user.getAvatar(),
+                        name=user.getName(),
+                    ),
+                    cls=Action.AccordActionEncoder,
+                    ensure_ascii=False,
+                )
             case Action.ActionType.LEAVE:
-                content = '离开服务器'
+                content = "离开服务器"
 
-        body = content.encode('utf-8')
-        header = ProtocolDataHeader(Action=action,
-                            ContentEncoding=ProtocolDataEncoding.UTF8,
-                            ContentLength=len(body),
-                            ContentMime="application/json")
+        body = content.encode("utf8")
+        header = ProtocolDataHeader(
+            Action=action,
+            ContentEncoding=ProtocolDataEncoding.UTF8,
+            ContentLength=len(body),
+            ContentMime="application/json",
+        )
         headerBuffer = json.dumps(header, cls=DataBuilder.ProtocolDataHeaderEncoder).encode("utf-8")
 
         fixedLength = len(headerBuffer).to_bytes(4, sys.byteorder, signed=False)

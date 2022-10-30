@@ -32,6 +32,6 @@ class AvatarLabel(QLabel):
         if (not pixmap is None):
             self.avatar = pixmap
         else:
-            self.avatar = QPixmap(IconsMap.avatar_default.value)
+            self.avatar = IconBuilder.getQPixmapFromPath(IconsMap.avatar_default.value)
         self.avatar = self.avatar.scaled(self.size())
         self.setPixmap(self.avatar)

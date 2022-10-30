@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from PyQt6.QtCore import QModelIndex, Qt
 from PyQt6.QtGui import QColor, QPalette, QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
@@ -21,7 +23,6 @@ user = MemberController.MemberController()
 
 
 class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
-
     def __init__(self, app: QApplication):
         super(AccordMainWindow, self).__init__()
         self.setupUi(self)
@@ -35,7 +36,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         # self.setPalette(palette)
 
         isServersDataReady: bool = False
-        while (not isServersDataReady):
+        while not isServersDataReady:
             isServersDataReady = self.updateServers()
 
         self.labelAvatar = AvatarLabel(self)
@@ -44,7 +45,12 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.connectSlot()
 
         if user.getMemberHash() == "":
-            dialog = QMessageBox(title="无效的用户hash", text="请通过下方按钮更新用户hash", icon=QMessageBox.Icon.Warning, parent=self)
+            dialog = QMessageBox(
+                title="无效的用户hash",
+                text="请通过下方按钮更新用户hash",
+                icon=QMessageBox.Icon.Warning,
+                parent=self,
+            )
             dialog.exec()
         else:
             self.labelHash.setText(f"#{user.getMemberHash()}")
@@ -53,18 +59,24 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.labelAvatar.setAvatar(user.getAvatarPixmap())
 
     def connectSlot(self):
-        self.serversList.doubleClicked.connect(self.onServerListDoubleClicked)
+        self.listServers.doubleClicked.connect(self.onServerListDoubleClicked)
         self.buttonServerEnter.clicked.connect(self.onButtonServerEnterClicked)
         self.buttonRequireHash.clicked.connect(user.updateMemberHash)
         self.buttonServerLeave.clicked.connect(conn.leave)
+        conn.emitReceiveCtrlMsg.connect(self.setStatusLabel)
+        conn.emitUpdateMembersList.connect(self.updateMembersList)
 
         user.emitUpdateHash.connect(self.labelHash.setText)
 
     def updateServers(self) -> bool:
-        dialog = QMessageBox(self)
-        dialog.setWindowTitle("网络错误")
-        dialog.setStandardButtons(QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Cancel)
-        dialog.setIcon(QMessageBox.Icon.Warning)
+        dialog = QMessageBox(
+            QMessageBox.Icon.Warning,
+            "网络错误",
+            "error",
+            QMessageBox.StandardButton.Retry | QMessageBox.StandardButton.Cancel,
+            self,
+        )
+
         dialog.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, on=True)
         code = 0
 
@@ -76,7 +88,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
                 data.append(DataBuilder.server(s))
 
             model.setServerData(data)
-            self.serversList.setModel(model)
+            self.listServers.setModel(model)
 
         except Timeout:
             dialog.setText("获取服务器信息超时")
@@ -85,31 +97,48 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             dialog.setText("获取服务器信息错误\n" + e.__str__())
             code = dialog.exec()
         finally:
-            if (code == 0):
+            if code == 0:
                 return True
-            elif (code == QMessageBox.StandardButton.Cancel):
+            elif code == QMessageBox.StandardButton.Cancel:
                 self.destroy()
                 self.deleteLater()
                 return True
             else:
                 return False
 
+    def updateMembersList(self, membersList):
+        model = AccordServer.MembersListModel()
+        model.setMembersList(membersList)
+        self.listMembers.setModel(model)
+        value = conn.serverData
+        self.labelServerName.setText(f"{value.showName} - {value.actualName}#{value.hash}")
+
     def closeEvent(self, ev):
         ev.accept()
+
+    def setStatusLabel(self, msg, action):
+        now = datetime.now()
+        time_str = now.strftime("%m-%d %H:%M:%S")
+        self.labelStatus.setText(f"[{time_str}] {action}: {msg}")
 
     def onServerListDoubleClicked(self, curIndex: QModelIndex):
         self.handleEnterServer(curIndex.isValid(), curIndex)
 
     def onButtonServerEnterClicked(self):
-        indexes = self.serversList.selectedIndexes()
+        indexes = self.listServers.selectedIndexes()
         self.handleEnterServer(len(indexes) > 0, indexes[0])
 
     def handleEnterServer(self, valid: bool, curIndex: QModelIndex):
-        if (not valid):
-            dialog = QMessageBox(text="未选择正确的服务器", title="服务器进入失败", icon=QMessageBox.Icon.Warning, parent=self)
+        if not valid:
+            dialog = QMessageBox(
+                text="未选择正确的服务器",
+                title="服务器进入失败",
+                icon=QMessageBox.Icon.Warning,
+                parent=self,
+            )
             dialog.exec()
         else:
-            serverData: AccordServer.ServerData = self.serversList.model().data(curIndex, Qt.ItemDataRole.UserRole)
+            serverData: AccordServer.ServerData = self.listServers.model().data(curIndex, Qt.ItemDataRole.UserRole)
             if (serverData.hash != conn.serverData.hash) & (conn.serverData.hash != ""):
                 self.promise = SignalWaiter(conn.emitDisconnected, conn.leave)
                 self.promise.then(lambda: conn.enter(serverData))

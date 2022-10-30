@@ -7,6 +7,9 @@ class ActionType(Enum):
     TIMEOUT = "timeout"
     ENTER = "enter"
     LEAVE = "leave"
+    ACCEPT = "accept"
+    REFUSE = "refuse"
+    UPDATE_MEMBERS = "updateMemberList"
 
 
 @dataclass
@@ -18,7 +21,6 @@ class ActionEnter:
 
 
 class AccordActionEncoder(json.JSONEncoder):
-
     def default(self, obj):
         if isinstance(obj, ActionEnter):
             return {

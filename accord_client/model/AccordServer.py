@@ -10,6 +10,7 @@ import accord_client as Accord
 from accord_client.helper import icon_builder as IconBuilder
 from accord_client.model import AccordAction
 
+
 @dataclass
 class ServerData:
     hash: str = field(default="")
@@ -17,10 +18,12 @@ class ServerData:
     actualName: str = field(default="")
     icon: str = field(default="")
 
+
 class ProtocolDataEncoding(Enum):
     UTF8 = "utf8"
     BINARY = "binary"
-    
+
+
 @dataclass
 class ProtocolDataHeader:
     ContentLength: int
@@ -51,6 +54,40 @@ class ServerDataModel(QAbstractListModel):
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self.serverList)
-    
-    def setServerData(self, serverList:list[ServerData]):
+
+    def setServerData(self, serverList: list[ServerData]):
         self.serverList = serverList
+
+
+@dataclass
+class MemberData:
+    name: str = field(default="")
+    avatar: str = field(default="")
+
+
+class MembersListModel(QAbstractListModel):
+    membersList: list[MemberData] = []
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
+        value = self.membersList[index.row()]
+        match role:
+            case Qt.ItemDataRole.DisplayRole:
+
+                return value.name
+            case Qt.ItemDataRole.ToolTipRole:
+                return f"{value.name}"
+            case Qt.ItemDataRole.DecorationRole:
+                return IconBuilder.getQPixmapFromBase64(value.avatar, Accord.IconsMap.avatar_default.value, [18, 18])
+            case Qt.ItemDataRole.UserRole:
+                return value
+            case _:
+                return None
+
+    def rowCount(self, parent: QModelIndex = ...) -> int:
+        return len(self.membersList)
+
+    def setMembersList(self, membersList: list[MemberData]):
+        self.membersList = membersList

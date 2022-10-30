@@ -22,6 +22,13 @@ def protocol_data_header(data: dict):
     )
 
 
+def update_members_list(datas: list[dict]):
+    ret = []
+    for data in datas:
+        ret.append(MemberData(name=str(data['name']), avatar=str(data['avatar'])))
+    return ret
+
+
 class ProtocolDataHeaderEncoder(json.JSONEncoder):
 
     def default(self, obj):

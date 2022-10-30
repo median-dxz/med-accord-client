@@ -50,6 +50,12 @@ globalSettings.beginGroup("UserInfo")
 if (not globalSettings.contains("hash")):
     globalSettings.setValue("hash", "")
 
+if (not globalSettings.contains("name")):
+    globalSettings.setValue("name", "Accord萌新")
+
+if (not globalSettings.contains("avatar")):
+    globalSettings.setValue("avatar", "")
+    
 globalSettings.endGroup()
 
 
