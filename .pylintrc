@@ -1,4 +1,14 @@
-disable=missing-module-docstring
-disable=missing-class-docstring
-disable=missing-function-docstring
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    import-error,
+    invalid-name,
+    unbalanced-tuple-unpacking
+
+[MAIN]
 extension-pkg-allow-list=PyQt6
+
+[FORMAT]
+max-line-length=128

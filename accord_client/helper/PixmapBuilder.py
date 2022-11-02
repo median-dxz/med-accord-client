@@ -8,13 +8,17 @@ from PyQt6.QtGui import QPixmap
 from accord_client import baseDir
 
 
-def getQPixmapFromPath(path: str, scaled=[256, 256]) -> QPixmap:
+def getQPixmapFromPath(path: str, scaled=None) -> QPixmap:
+    if scaled is None:
+        scaled = [256, 256]
     filePath = os.path.join(baseDir, "assets", path)
     pix = QPixmap(filePath)
     return scale(pix=pix, scaled=scaled)
 
 
-def getQPixmapFromBase64(data: str, default: str, scaled=[24, 24]) -> QPixmap:
+def getQPixmapFromBase64(data: str, default: str, scaled=None) -> QPixmap:
+    if scaled is None:
+        scaled = [24, 24]
     try:
         byteData = base64.b64decode(data)
     except binascii.Error:
@@ -29,5 +33,7 @@ def getQPixmapFromBase64(data: str, default: str, scaled=[24, 24]) -> QPixmap:
 
 def scale(pix: QPixmap, scaled) -> QPixmap:
     return pix.scaled(
-        QSize(scaled[0], scaled[1]), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
+        QSize(scaled[0], scaled[1]),
+        Qt.AspectRatioMode.KeepAspectRatio,
+        Qt.TransformationMode.SmoothTransformation,
     )

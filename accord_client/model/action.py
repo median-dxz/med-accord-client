@@ -20,7 +20,13 @@ class ActionEnter:
     name: str = field(default="")
 
 
-class AccordActionEncoder(json.JSONEncoder):
+@dataclass
+class ActionAccept:
+    action: ActionType
+    msg: str = field(default="")
+
+
+class ActionEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, ActionEnter):
             return {

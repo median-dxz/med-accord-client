@@ -1,10 +1,9 @@
 from enum import Enum
 
-from PyQt6.QtCore import QObject, pyqtBoundSignal, pyqtSignal
+from PyQt6.QtCore import QObject, pyqtBoundSignal
 
 
 class SignalWaiter(QObject):
-
     class State(Enum):
         PENDING = ...
         FULFILLED = ...

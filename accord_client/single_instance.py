@@ -4,35 +4,35 @@ from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 class SingleInstance:
     def __init__(self, appid):
         self._appid = appid
-        self._isRunning = False
+        self._is_running = False
         self._server = None
-        localSocket = QLocalSocket()
-        localSocket.connectToServer(appid)
+        local_socket = QLocalSocket()
+        local_socket.connectToServer(appid)
 
-        self._isRunning = localSocket.waitForConnected()
-        if self._isRunning:
-            localSocket.disconnectFromServer()
+        self._is_running = local_socket.waitForConnected()
+        if self._is_running:
+            local_socket.disconnectFromServer()
         else:
-            error = localSocket.error()
+            error = local_socket.error()
             if error == QLocalSocket.LocalSocketError.ConnectionRefusedError:
                 QLocalServer.removeServer(self._appid)
             self._server = QLocalServer()
             self._server.listen(self._appid)
-            self._server.newConnection.connect(self._onNewConnection)
-        localSocket.close()
+            self._server.newConnection.connect(self._on_new_connection)
+        local_socket.close()
 
     def close(self):
         if self._server:
             self._server.close()
 
-    def isRunning(self):
-        return self._isRunning
+    def is_running(self):
+        return self._is_running
 
-    def _onNewConnection(self):
+    def _on_new_connection(self):
         if not self._server:
             return
-        inSocket = self._server.nextPendingConnection()
-        if not inSocket:
+        in_socket = self._server.nextPendingConnection()
+        if not in_socket:
             return
-        inSocket.disconnectFromServer()
-        inSocket.close()
+        in_socket.disconnectFromServer()
+        in_socket.close()

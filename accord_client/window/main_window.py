@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from PyQt6.QtCore import QModelIndex, Qt
-from PyQt6.QtGui import QColor, QIcon, QPalette
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QVBoxLayout
 from requests.exceptions import Timeout
 
@@ -23,6 +23,7 @@ member = MemberController()
 class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
     def __init__(self, app: QApplication):
         super(AccordMainWindow, self).__init__()
+        self.promise = None
         self.setupUi(self)
         self.app = app
 
@@ -38,11 +39,11 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             isServersDataReady = self.updateServers()
 
         self.labelAvatar = AvatarLabel(self)
-        self.horizontalLayout_userInfo.insertWidget(0, self.labelAvatar)
+        self.layout_userInfo.insertWidget(0, self.labelAvatar)
 
-        self.verticalLayout_message = QVBoxLayout(self.widgetMessage)
-        self.verticalLayout_message.setDirection(QVBoxLayout.Direction.BottomToTop)
-        self.verticalLayout_message.addStretch()
+        self.layout_message = QVBoxLayout(self.widgetMessage)
+        self.layout_message.setDirection(QVBoxLayout.Direction.BottomToTop)
+        self.layout_message.addStretch()
 
         self.connectSlot()
 
@@ -65,9 +66,10 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.buttonServerEnter.clicked.connect(self.onButtonServerEnterClicked)
         self.buttonServerLeave.clicked.connect(client.leave)
         self.buttonRequireHash.clicked.connect(member.updateMemberHash)
-        self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
         client.emitReceiveCtrlMsg.connect(self.setStatusLabel)
         client.emitUpdateMembersList.connect(self.updateMembersList)
+        client.emitAcceptEnter.connect(self.handleAfterEnterServer)
+        client.emitDisconnected.connect(self.handleAfterLeaveServer)
 
         member.emitUpdateHash.connect(self.labelHash.setText)
 
@@ -85,7 +87,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
 
         try:
             model = AccordModel.ServerDataModel()
-            serverList = HttpService.getServerList()
+            serverList = HttpService.get_server_list()
             data = []
             for s in serverList:
                 data.append(DataBuilder.server(s))
@@ -97,12 +99,13 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             dialog.setText("获取服务器信息超时")
             code = dialog.exec()
         except Exception as e:
-            dialog.setText("获取服务器信息错误\n" + e.__str__())
+            dialog.setText("获取服务器信息错误\n" + str(e))
             code = dialog.exec()
         finally:
             if code == 0:
                 return True
-            elif code == QMessageBox.StandardButton.Cancel:
+
+            if code == QMessageBox.StandardButton.Cancel:
                 self.destroy()
                 self.deleteLater()
                 return True
@@ -114,7 +117,9 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         model.setMembersList(membersList)
         self.listMembers.setModel(model)
         value = client.serverData
-        self.labelServerName.setText(f"{value.showName} - {value.actualName}#{value.hash}")
+        self.labelServerName.setText(
+            f"{value.showName} - {value.actualName}#{value.hash}"
+        )
 
     def closeEvent(self, ev):
         ev.accept()
@@ -144,21 +149,25 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             )
             dialog.exec()
         else:
-            serverData: AccordData.ServerData = self.listServers.model().data(curIndex, Qt.ItemDataRole.UserRole)
-            if (serverData.hash != client.serverData.hash) & (client.serverData.hash != ""):
+            serverData: AccordData.ServerData = self.listServers.model().data(
+                curIndex, Qt.ItemDataRole.UserRole
+            )
+            if (serverData.hash != client.serverData.hash) & (
+                client.serverData.hash != ""
+            ):
                 self.promise = SignalWaiter(client.emitDisconnected, client.leave)
                 self.promise.then(lambda: client.enter(serverData))
             elif client.serverData.hash == "":
                 client.enter(serverData)
 
-    def handleAfterEnterServer(self, result):
-        pass
+    def handleAfterEnterServer(self):
+        self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
 
-    def handleAfterLeaveServer(self, result):
-        pass
+    def handleAfterLeaveServer(self):
+        self.buttonSendMessage.clicked.disconnect(self.onButtonSendMessageClicked)
 
     def handleSendMessage(self):
         m = Message(self)
         m.hide()
-        self.verticalLayout_message.addWidget(m)
+        self.layout_message.addWidget(m)
         m.show()

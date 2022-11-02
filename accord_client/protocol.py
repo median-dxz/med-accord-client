@@ -32,15 +32,15 @@ def protocol_header(data: dict):
 
 
 class ProtocolHeaderEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, ProtocolHeader):
+    def default(self, o):
+        if isinstance(o, ProtocolHeader):
             return {
-                "Action": obj.Action.value,
-                "ContentEncoding": obj.ContentEncoding.value,
-                "ContentLength": obj.ContentLength,
-                "ContentMime": obj.ContentMime,
+                "Action": o.Action.value,
+                "ContentEncoding": o.ContentEncoding.value,
+                "ContentLength": o.ContentLength,
+                "ContentMime": o.ContentMime,
             }
-        return json.JSONEncoder.default(self, obj)
+        return json.JSONEncoder.default(self, o)
 
 
 class ProtocolData(QObject):
@@ -61,14 +61,21 @@ class ProtocolData(QObject):
         bytesToRead = 4
 
         if (self.fixedLength == 0) & (len(buf) >= bytesToRead):
-            self.fixedLength = int.from_bytes(buf[bytesRead : bytesRead + bytesToRead], byteorder=sys.byteorder, signed=False)
+            self.fixedLength = int.from_bytes(
+                buf[bytesRead : bytesRead + bytesToRead],
+                byteorder=sys.byteorder,
+                signed=False,
+            )
             bytesRead += bytesToRead
 
         if self.fixedLength != 0:
             bytesToRead = self.fixedLength
 
         if (self.header is None) & (len(buf) - bytesRead >= bytesToRead):
-            self.header = json.loads(buf[bytesRead : bytesRead + bytesToRead].decode("utf-8"), object_hook=protocol_header)
+            self.header = json.loads(
+                buf[bytesRead : bytesRead + bytesToRead].decode("utf-8"),
+                object_hook=protocol_header,
+            )
             bytesRead += bytesToRead
 
         if not self.header is None:

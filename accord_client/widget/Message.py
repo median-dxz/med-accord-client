@@ -1,28 +1,23 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QGridLayout, QLabel, QSizePolicy, QWidget
+from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import QGridLayout, QLabel, QSizePolicy, QTextBrowser
+
+from accord_client.widget.AvatarLabel import AvatarLabel
 
 
-class Message(QWidget):
+class Message(QtWidgets.QWidget):
     def __init__(self, parent) -> None:
         super(Message, self).__init__(parent=parent)
         self.grid = QGridLayout(self)
         self.setLayout(self.grid)
-        self.grid.addWidget(QLabel("it's a username", self), 0, 1)
-        self.grid.addWidget(QLabel("it's a time", self), 1, 1)
-        self.grid.addWidget(QLabel("it's a avatar", self), 0, 0, 2, 1)
+        self.lab_username = QLabel("it's a username", self)
+        self.lab_time = QLabel("it's a time", self)
+        self.lab_avatar = AvatarLabel(self)
+        self.text_content = QTextBrowser(self)
+        self.grid.addWidget(self.lab_username, 0, 1)
+        self.grid.addWidget(self.lab_time, 1, 1)
+        self.grid.addWidget(self.lab_avatar, 0, 0, 2, 1)
         self.grid.addWidget(
-            QLabel(
-                """it's a message
-        wwwww
-        wwww
-        www
-        asdf
-        www
-        www
-        asdf
-        asdf""",
-                self,
-            ),
+            self.text_content,
             2,
             0,
             1,

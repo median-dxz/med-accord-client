@@ -8,7 +8,7 @@ from accord_client import baseDir
 configMain = QSettings(os.path.join(baseDir, "config", "global.ini"), QSettings.Format.IniFormat)
 
 
-def getValue(group: str, keys: list[str]):
+def get_value(group: str, keys: list[str]):
     configMain.beginGroup(group)
     ret = []
     for key in keys:
@@ -17,8 +17,8 @@ def getValue(group: str, keys: list[str]):
     return ret
 
 
-def setValue(group: str, entities: list[tuple[str, typing.Any]]):
+def set_value(group: str, entities: list[tuple[str, typing.Any]]):
     configMain.beginGroup(group)
-    for k, v in entities:
-        configMain.setValue(k, v)
+    for key, value in entities:
+        configMain.setValue(key, value)
     configMain.endGroup()

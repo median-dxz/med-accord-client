@@ -4,11 +4,11 @@ import sys
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtNetwork import QAbstractSocket, QHostAddress, QTcpSocket
 
-import accord_client.model.action as Action
+import accord_client.model.action as AccordAction
 import accord_client.model.data as AccordData
-import accord_client.model.model as AccordModel
 from accord_client import DataBuilder, SignalWaiter, protocol, settings
 from accord_client.member import MemberController
+from accord_client.model.action import ActionEncoder, ActionType
 
 member = MemberController()
 
@@ -19,15 +19,18 @@ class ClientController(QObject):
     emitDisconnected = pyqtSignal()
     emitReceiveCtrlMsg = pyqtSignal(str, str)
     emitUpdateMembersList = pyqtSignal(list)
+    emitAcceptEnter = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
+        self.promise = None
 
         self._socket = QTcpSocket()
         self._socket.readyRead.connect(self.receive)
         self._socket.disconnected.connect(self.disconnected)
 
-        self.init()
+        self.protocolData = protocol.ProtocolData(bytearray())
+        self.serverData = AccordData.ServerData()
 
     def __new__(cls, *args, **kw):
         if cls._instance is None:
@@ -39,7 +42,7 @@ class ClientController(QObject):
         self.serverData = AccordData.ServerData()
 
     def connect(self):
-        [host, port] = settings.getValue("AccordServer", ["host", "port"])
+        [host, port] = settings.get_value("AccordServer", ["host", "port"])
         port = int(port)
 
         if self._socket.state() == QAbstractSocket.SocketState.ConnectedState:
@@ -52,12 +55,12 @@ class ClientController(QObject):
         self.protocolData.readyConsume.connect(self.consume)
 
     def disconnected(self):
-        print(f"[Accord]: Close Connection")
+        print("[Accord]: Close Connection")
         self.init()
         self.emitDisconnected.emit()
 
     def receive(self):
-        print(f"[Accord]: Client<<Server")
+        print("[Accord]: Client<<Server")
         if self.protocolData.consumed:
             chunk = self.protocolData.chunk
             self.protocolData = protocol.ProtocolData(chunk)
@@ -69,41 +72,54 @@ class ClientController(QObject):
         # print(self._socket.state())
         if self.serverData.hash == "":
             return
-        self.request(Action.ActionType.LEAVE)
+        self.request(ActionType.LEAVE)
         self._socket.disconnectFromHost()
 
     def enter(self, data: AccordData.ServerData):
         self.serverData = data
         self.promise = SignalWaiter(self._socket.connected, self.connect)  # type: ignore
-        self.promise.then(lambda: self.request(Action.ActionType.ENTER))
+        self.promise.then(lambda: self.request(ActionType.ENTER))
 
     def consume(self, header: protocol.ProtocolHeader, body: bytes):
         decode_body = body.decode("utf8")
         match header.Action:
-            case Action.ActionType.UPDATE_MEMBERS:
-                memberList = json.loads(decode_body, object_hook=DataBuilder.update_members_list)
+            case ActionType.ACCEPT:
+                actionData: AccordAction.ActionAccept = json.loads(
+                    decode_body, object_hook=DataBuilder.accept
+                )
+                match actionData.action:
+                    case ActionType.ENTER:
+                        self.emitAcceptEnter.emit()
+                    case _:
+                        self.emitReceiveCtrlMsg.emit(decode_body, header.Action.value)
+
+            case ActionType.UPDATE_MEMBERS:
+                memberList = json.loads(
+                    decode_body, object_hook=DataBuilder.update_members_list
+                )
                 print(memberList)
                 self.emitUpdateMembersList.emit(memberList)
+
             case _:
                 self.emitReceiveCtrlMsg.emit(decode_body, header.Action.value)
         print(decode_body, header.Action)
 
-    def request(self, action: Action.ActionType):
+    def request(self, action: ActionType):
         body = b""
         content = ""
         match action:
-            case Action.ActionType.ENTER:
+            case ActionType.ENTER:
                 content = json.dumps(
-                    Action.ActionEnter(
+                    AccordAction.ActionEnter(
                         serverHash=self.serverData.hash,
                         memberHash=member.hash,
                         avatar=member.avatar,
                         name=member.name,
                     ),
-                    cls=Action.AccordActionEncoder,
+                    cls=ActionEncoder,
                     ensure_ascii=False,
                 )
-            case Action.ActionType.LEAVE:
+            case ActionType.LEAVE:
                 content = "离开服务器"
 
         body = content.encode("utf8")
@@ -113,7 +129,9 @@ class ClientController(QObject):
             ContentLength=len(body),
             ContentMime="application/json",
         )
-        headerBuffer = json.dumps(header, cls=protocol.ProtocolHeaderEncoder).encode("utf-8")
+        headerBuffer = json.dumps(header, cls=protocol.ProtocolHeaderEncoder).encode(
+            "utf-8"
+        )
 
         fixedLength = len(headerBuffer).to_bytes(4, sys.byteorder, signed=False)
         self._socket.write(fixedLength + headerBuffer + body)

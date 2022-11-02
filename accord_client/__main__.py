@@ -20,7 +20,7 @@ def main():
     window.show()
     app.setActiveWindow(window)
 
-    if instance.isRunning():
+    if instance.is_running():
         print("An instance is running now!")
 
         dialog = QMessageBox(QMessageBox.Icon.Warning, "启动失败", "Accord客户端实例已经运行", parent=window)
@@ -47,35 +47,35 @@ def init_app(app: QApplication):
 
 
 def init_settings():
-    configMain = settings.configMain
-    configMain.beginGroup("ListService")
+    config_main = settings.configMain
+    config_main.beginGroup("ListService")
 
-    if not configMain.contains("host"):
-        configMain.setValue("host", "127.0.0.1")
-    if not configMain.contains("port"):
-        configMain.setValue("port", 4545)
+    if not config_main.contains("host"):
+        config_main.setValue("host", "127.0.0.1")
+    if not config_main.contains("port"):
+        config_main.setValue("port", 4545)
 
-    configMain.endGroup()
+    config_main.endGroup()
 
-    configMain.beginGroup("AccordServer")
+    config_main.beginGroup("AccordServer")
 
-    if not configMain.contains("host"):
-        configMain.setValue("host", "127.0.0.1")
-    if not configMain.contains("port"):
-        configMain.setValue("port", 9980)
+    if not config_main.contains("host"):
+        config_main.setValue("host", "127.0.0.1")
+    if not config_main.contains("port"):
+        config_main.setValue("port", 9980)
 
-    configMain.endGroup()
+    config_main.endGroup()
 
-    configMain.beginGroup("UserInfo")
+    config_main.beginGroup("UserInfo")
 
-    if not configMain.contains("hash"):
-        configMain.setValue("hash", "")
-    if not configMain.contains("name"):
-        configMain.setValue("name", "Accord萌新")
-    if not configMain.contains("avatar"):
-        configMain.setValue("avatar", "")
+    if not config_main.contains("hash"):
+        config_main.setValue("hash", "")
+    if not config_main.contains("name"):
+        config_main.setValue("name", "Accord萌新")
+    if not config_main.contains("avatar"):
+        config_main.setValue("avatar", "")
 
-    configMain.endGroup()
+    config_main.endGroup()
 
 
 if __name__ == "__main__":

@@ -13,3 +13,5 @@ class ServerData:
 class MemberData:
     name: str = field(default="")
     avatar: str = field(default="")
+
+

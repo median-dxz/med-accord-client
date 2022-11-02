@@ -14,7 +14,7 @@ class MemberController(QObject):
     def __init__(self) -> None:
         super().__init__()
         self._hash = ""
-        [self._hash, _name, _avatar] = settings.getValue("UserInfo", ["hash", "name", "avatar"])
+        [self._hash, _name, _avatar] = settings.get_value("UserInfo", ["hash", "name", "avatar"])
         self.data = AccordData.MemberData(name=_name, avatar=_avatar)
 
     def __new__(cls, *args, **kw):
@@ -23,8 +23,8 @@ class MemberController(QObject):
         return cls._instance
 
     def updateMemberHash(self):
-        HttpService.requireHash()
-        [self._hash] = settings.getValue("UserInfo", ["hash"])
+        HttpService.require_hash()
+        [self._hash] = settings.get_value("UserInfo", ["hash"])
         self.emitUpdateHash.emit(f"#{self._hash}")
 
     @property
