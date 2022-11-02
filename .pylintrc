@@ -1,0 +1,4 @@
+disable=missing-module-docstring
+disable=missing-class-docstring
+disable=missing-function-docstring
+extension-pkg-allow-list=PyQt6

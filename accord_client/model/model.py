@@ -1,39 +1,14 @@
-from dataclasses import dataclass, field
-from enum import Enum
 import typing
+from dataclasses import dataclass, field
 
-from PyQt6.QtCore import QAbstractListModel, QModelIndex
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QAbstractListModel, QModelIndex, Qt
 
-import accord_client as Accord
-
-from accord_client.helper import icon_builder as IconBuilder
-from accord_client.model import AccordAction
-
-
-@dataclass
-class ServerData:
-    hash: str = field(default="")
-    showName: str = field(default="")
-    actualName: str = field(default="")
-    icon: str = field(default="")
-
-
-class ProtocolDataEncoding(Enum):
-    UTF8 = "utf8"
-    BINARY = "binary"
-
-
-@dataclass
-class ProtocolDataHeader:
-    ContentLength: int
-    ContentMime: str
-    ContentEncoding: ProtocolDataEncoding
-    Action: AccordAction.ActionType
+from accord_client import Icons, PixmapBuilder
+from accord_client.model import data as AccordData
 
 
 class ServerDataModel(QAbstractListModel):
-    serverList: list[ServerData] = []
+    serverList: list[AccordData.ServerData] = []
 
     def __init__(self) -> None:
         super().__init__()
@@ -46,7 +21,7 @@ class ServerDataModel(QAbstractListModel):
             case Qt.ItemDataRole.ToolTipRole:
                 return f"{value.showName} - {value.actualName}#{value.hash}"
             case Qt.ItemDataRole.DecorationRole:
-                return IconBuilder.getQPixmapFromBase64(value.icon, Accord.IconsMap.server_default.value)
+                return PixmapBuilder.getQPixmapFromBase64(value.icon, Icons.SERVER)
             case Qt.ItemDataRole.UserRole:
                 return value
             case _:
@@ -55,24 +30,18 @@ class ServerDataModel(QAbstractListModel):
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self.serverList)
 
-    def setServerData(self, serverList: list[ServerData]):
+    def setServerData(self, serverList: list[AccordData.ServerData]):
         self.serverList = serverList
 
 
-@dataclass
-class MemberData:
-    name: str = field(default="")
-    avatar: str = field(default="")
-
-
 class MembersListModel(QAbstractListModel):
-    membersList: list[MemberData] = []
+    memberList: list[AccordData.MemberData] = []
 
     def __init__(self) -> None:
         super().__init__()
 
     def data(self, index: QModelIndex, role: int = ...) -> typing.Any:
-        value = self.membersList[index.row()]
+        value = self.memberList[index.row()]
         match role:
             case Qt.ItemDataRole.DisplayRole:
 
@@ -80,14 +49,14 @@ class MembersListModel(QAbstractListModel):
             case Qt.ItemDataRole.ToolTipRole:
                 return f"{value.name}"
             case Qt.ItemDataRole.DecorationRole:
-                return IconBuilder.getQPixmapFromBase64(value.avatar, Accord.IconsMap.avatar_default.value, [24, 24])
+                return PixmapBuilder.getQPixmapFromBase64(value.avatar, Icons.AVATAR, [24, 24])
             case Qt.ItemDataRole.UserRole:
                 return value
             case _:
                 return None
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
-        return len(self.membersList)
+        return len(self.memberList)
 
-    def setMembersList(self, membersList: list[MemberData]):
-        self.membersList = membersList
+    def setMembersList(self, memberList: list[AccordData.MemberData]):
+        self.memberList = memberList

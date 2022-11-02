@@ -2,8 +2,8 @@ from PyQt6.QtCore import QFileInfo, QSize, Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QLabel
 
-from accord_client import IconsMap
-from accord_client.helper import icon_builder as IconBuilder
+from accord_client import Icons
+from accord_client.helper import PixmapBuilder as IconBuilder
 
 StyleSheet = f"""
 AvatarLabel {{
@@ -32,5 +32,5 @@ class AvatarLabel(QLabel):
         if not pixmap is None:
             self.avatar = pixmap.scaled(self.size())
         else:
-            self.avatar = IconBuilder.getQPixmapFromPath(IconsMap.avatar_default.value, self.size())
+            self.avatar = IconBuilder.getQPixmapFromPath(Icons.AVATAR, self.size())
         self.setPixmap(self.avatar)

@@ -1,25 +1,23 @@
 from datetime import datetime
 
 from PyQt6.QtCore import QModelIndex, Qt
-from PyQt6.QtGui import QColor, QPalette, QIcon
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PyQt6.QtGui import QColor, QIcon, QPalette
+from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QVBoxLayout
 from requests.exceptions import Timeout
 
 import accord_client as Accord
-
-import accord_client.helper.icon_builder as IconBuilder
-
-from accord_client.helper import data_builder as DataBuilder
-from accord_client.helper.signal_waiter import SignalWaiter
-from accord_client.model import AccordServer
-from accord_client.provider import client_controller as ClientController
-from accord_client.provider import member_controller as MemberController
-from accord_client.provider import network_service as NetworkService
+import accord_client.model.data as AccordData
+import accord_client.model.model as AccordModel
+from accord_client import DataBuilder, PixmapBuilder, SignalWaiter
+from accord_client import http_service as HttpService
+from accord_client.client import ClientController
+from accord_client.member import MemberController
 from accord_client.ui import ui_main
 from accord_client.widget.AvatarLabel import AvatarLabel
+from accord_client.widget.Message import Message
 
-conn = ClientController.ClientController()
-user = MemberController.MemberController()
+client = ClientController()
+member = MemberController()
 
 
 class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
@@ -29,7 +27,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.app = app
 
         self.setWindowTitle(Accord.__appname__)
-        self.setWindowIcon(QIcon(IconBuilder.getQPixmapFromPath(Accord.IconsMap.logo.value)))
+        self.setWindowIcon(QIcon(PixmapBuilder.getQPixmapFromPath(Accord.Icons.LOGO)))
 
         # palette = self.palette()
         # palette.setColor(QPalette.ColorGroup.Normal, QPalette.ColorRole.Window, QColor(255, 255, 255))
@@ -42,9 +40,13 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.labelAvatar = AvatarLabel(self)
         self.horizontalLayout_userInfo.insertWidget(0, self.labelAvatar)
 
+        self.verticalLayout_message = QVBoxLayout(self.widgetMessage)
+        self.verticalLayout_message.setDirection(QVBoxLayout.Direction.BottomToTop)
+        self.verticalLayout_message.addStretch()
+
         self.connectSlot()
 
-        if user.getMemberHash() == "":
+        if member.hash == "":
             dialog = QMessageBox(
                 title="无效的用户hash",
                 text="请通过下方按钮更新用户hash",
@@ -53,20 +55,21 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             )
             dialog.exec()
         else:
-            self.labelHash.setText(f"#{user.getMemberHash()}")
+            self.labelHash.setText(f"#{member.hash}")
 
-        self.textInputName.setText(user.getName())
-        self.labelAvatar.setAvatar(user.getAvatarPixmap())
+        self.textInputName.setText(member.name)
+        self.labelAvatar.setAvatar(member.getAvatarPixmap())
 
     def connectSlot(self):
         self.listServers.doubleClicked.connect(self.onServerListDoubleClicked)
         self.buttonServerEnter.clicked.connect(self.onButtonServerEnterClicked)
-        self.buttonRequireHash.clicked.connect(user.updateMemberHash)
-        self.buttonServerLeave.clicked.connect(conn.leave)
-        conn.emitReceiveCtrlMsg.connect(self.setStatusLabel)
-        conn.emitUpdateMembersList.connect(self.updateMembersList)
+        self.buttonServerLeave.clicked.connect(client.leave)
+        self.buttonRequireHash.clicked.connect(member.updateMemberHash)
+        self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
+        client.emitReceiveCtrlMsg.connect(self.setStatusLabel)
+        client.emitUpdateMembersList.connect(self.updateMembersList)
 
-        user.emitUpdateHash.connect(self.labelHash.setText)
+        member.emitUpdateHash.connect(self.labelHash.setText)
 
     def updateServers(self) -> bool:
         dialog = QMessageBox(
@@ -81,8 +84,8 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         code = 0
 
         try:
-            model = AccordServer.ServerDataModel()
-            serverList = NetworkService.getServerList()
+            model = AccordModel.ServerDataModel()
+            serverList = HttpService.getServerList()
             data = []
             for s in serverList:
                 data.append(DataBuilder.server(s))
@@ -107,10 +110,10 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
                 return False
 
     def updateMembersList(self, membersList):
-        model = AccordServer.MembersListModel()
+        model = AccordModel.MembersListModel()
         model.setMembersList(membersList)
         self.listMembers.setModel(model)
-        value = conn.serverData
+        value = client.serverData
         self.labelServerName.setText(f"{value.showName} - {value.actualName}#{value.hash}")
 
     def closeEvent(self, ev):
@@ -128,6 +131,9 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         indexes = self.listServers.selectedIndexes()
         self.handleEnterServer(len(indexes) > 0, indexes[0])
 
+    def onButtonSendMessageClicked(self):
+        self.handleSendMessage()
+
     def handleEnterServer(self, valid: bool, curIndex: QModelIndex):
         if not valid:
             dialog = QMessageBox(
@@ -138,15 +144,21 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             )
             dialog.exec()
         else:
-            serverData: AccordServer.ServerData = self.listServers.model().data(curIndex, Qt.ItemDataRole.UserRole)
-            if (serverData.hash != conn.serverData.hash) & (conn.serverData.hash != ""):
-                self.promise = SignalWaiter(conn.emitDisconnected, conn.leave)
-                self.promise.then(lambda: conn.enter(serverData))
-            elif conn.serverData.hash == "":
-                conn.enter(serverData)
+            serverData: AccordData.ServerData = self.listServers.model().data(curIndex, Qt.ItemDataRole.UserRole)
+            if (serverData.hash != client.serverData.hash) & (client.serverData.hash != ""):
+                self.promise = SignalWaiter(client.emitDisconnected, client.leave)
+                self.promise.then(lambda: client.enter(serverData))
+            elif client.serverData.hash == "":
+                client.enter(serverData)
 
     def handleAfterEnterServer(self, result):
         pass
 
     def handleAfterLeaveServer(self, result):
         pass
+
+    def handleSendMessage(self):
+        m = Message(self)
+        m.hide()
+        self.verticalLayout_message.addWidget(m)
+        m.show()

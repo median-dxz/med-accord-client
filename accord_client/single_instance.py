@@ -1,10 +1,7 @@
-import sys
-
 from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 
 
-class SingleInstance():
-
+class SingleInstance:
     def __init__(self, appid):
         self._appid = appid
         self._isRunning = False

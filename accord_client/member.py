@@ -1,10 +1,9 @@
 from PyQt6.QtCore import QObject, pyqtSignal
 
-import accord_client as Accord
-import accord_client.helper.icon_builder as IconBuilder
-from accord_client.model.AccordServer import MemberData
-from accord_client.provider import network_service as NetworkService
-import typing
+from accord_client import Icons, PixmapBuilder
+from accord_client import http_service as HttpService
+from accord_client import settings
+from accord_client.model import data as AccordData
 
 
 class MemberController(QObject):
@@ -15,8 +14,8 @@ class MemberController(QObject):
     def __init__(self) -> None:
         super().__init__()
         self._hash = ""
-        [self._hash, name, avatar] = Accord.getValue("UserInfo", ["hash", "name", "avatar"])
-        self.data = MemberData(name=name, avatar=avatar)
+        [self._hash, _name, _avatar] = settings.getValue("UserInfo", ["hash", "name", "avatar"])
+        self.data = AccordData.MemberData(name=_name, avatar=_avatar)
 
     def __new__(cls, *args, **kw):
         if cls._instance is None:
@@ -24,24 +23,29 @@ class MemberController(QObject):
         return cls._instance
 
     def updateMemberHash(self):
-        NetworkService.requireHash()
-        [self._hash] = Accord.getValue("UserInfo", ["hash"])
+        HttpService.requireHash()
+        [self._hash] = settings.getValue("UserInfo", ["hash"])
         self.emitUpdateHash.emit(f"#{self._hash}")
 
-    def getMemberHash(self) -> str:
+    @property
+    def hash(self) -> str:
         return self._hash
 
-    def getName(self) -> str:
+    @property
+    def name(self) -> str:
         return self.data.name
 
-    def getAvatar(self) -> str:
+    @property
+    def avatar(self) -> str:
         return self.data.avatar
 
+    @avatar.setter
     def setAvatar(self, avatar: str):
         self.data.avatar = avatar
 
+    @name.setter
     def setName(self, name: str):
         self.data.name = name
 
     def getAvatarPixmap(self):
-        return IconBuilder.getQPixmapFromBase64(self.getAvatar(), Accord.IconsMap.avatar_default.value, [36, 36])
+        return PixmapBuilder.getQPixmapFromBase64(self.avatar, Icons.AVATAR, [36, 36])

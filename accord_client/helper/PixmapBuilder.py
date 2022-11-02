@@ -3,18 +3,15 @@ import binascii
 import os
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QIcon, QPixmap
+from PyQt6.QtGui import QPixmap
 
 from accord_client import baseDir
 
 
-def getQPixmapFromPath(path, scaled=[256, 256]) -> QPixmap:
+def getQPixmapFromPath(path: str, scaled=[256, 256]) -> QPixmap:
     filePath = os.path.join(baseDir, "assets", path)
     pix = QPixmap(filePath)
-    pix = pix.scaled(
-        QSize(scaled[0], scaled[1]), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
-    )
-    return pix
+    return scale(pix=pix, scaled=scaled)
 
 
 def getQPixmapFromBase64(data: str, default: str, scaled=[24, 24]) -> QPixmap:
@@ -27,6 +24,10 @@ def getQPixmapFromBase64(data: str, default: str, scaled=[24, 24]) -> QPixmap:
     if pix.isNull():
         pix = QPixmap(os.path.join(baseDir, "assets", default))
 
+    return scale(pix=pix, scaled=scaled)
+
+
+def scale(pix: QPixmap, scaled) -> QPixmap:
     return pix.scaled(
         QSize(scaled[0], scaled[1]), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
     )

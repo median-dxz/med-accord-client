@@ -1,5 +1,6 @@
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtBoundSignal
 from enum import Enum
+
+from PyQt6.QtCore import QObject, pyqtBoundSignal, pyqtSignal
 
 
 class SignalWaiter(QObject):
