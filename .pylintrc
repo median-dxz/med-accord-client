@@ -5,7 +5,9 @@ disable=
     missing-function-docstring,
     import-error,
     invalid-name,
-    unbalanced-tuple-unpacking
+    unbalanced-tuple-unpacking,
+    wrong-import-position,
+]
 
 [MAIN]
 extension-pkg-allow-list=PyQt6

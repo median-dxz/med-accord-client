@@ -10,6 +10,9 @@ class ActionType(Enum):
     ACCEPT = "accept"
     REFUSE = "refuse"
     UPDATE_MEMBERS = "updateMemberList"
+    SEND_MESSAGE = "sendMessage"
+    RECEIVE_MESSAGE = "receiveMessage"
+    UNKNOWN = "unknown"
 
 
 @dataclass

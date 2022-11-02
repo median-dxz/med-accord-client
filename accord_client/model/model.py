@@ -21,7 +21,7 @@ class ServerDataModel(QAbstractListModel):
             case Qt.ItemDataRole.ToolTipRole:
                 return f"{value.showName} - {value.actualName}#{value.hash}"
             case Qt.ItemDataRole.DecorationRole:
-                return PixmapBuilder.getQPixmapFromBase64(value.icon, Icons.SERVER)
+                return PixmapBuilder.fromBase64(value.icon, Icons.SERVER)
             case Qt.ItemDataRole.UserRole:
                 return value
             case _:
@@ -49,7 +49,7 @@ class MembersListModel(QAbstractListModel):
             case Qt.ItemDataRole.ToolTipRole:
                 return f"{value.name}"
             case Qt.ItemDataRole.DecorationRole:
-                return PixmapBuilder.getQPixmapFromBase64(value.avatar, Icons.AVATAR, [24, 24])
+                return PixmapBuilder.fromBase64(value.avatar, Icons.AVATAR, [24, 24])
             case Qt.ItemDataRole.UserRole:
                 return value
             case _:

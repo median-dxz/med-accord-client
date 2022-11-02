@@ -23,6 +23,15 @@ class ProtocolHeader:
 
 
 def protocol_header(data: dict):
+    match_action = False
+    for name, member in action.ActionType.__members__.items():
+        if member.value == data["Action"]:
+            match_action = True
+            break
+
+    if not match_action:
+        data["Action"] = "unknown"
+
     return ProtocolHeader(
         Action=action.ActionType(data["Action"]),
         ContentEncoding=ProtocolEncoding(data["ContentEncoding"]),
@@ -32,15 +41,15 @@ def protocol_header(data: dict):
 
 
 class ProtocolHeaderEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, ProtocolHeader):
+    def default(self, obj):
+        if isinstance(obj, ProtocolHeader):
             return {
-                "Action": o.Action.value,
-                "ContentEncoding": o.ContentEncoding.value,
-                "ContentLength": o.ContentLength,
-                "ContentMime": o.ContentMime,
+                "Action": obj.Action.value,
+                "ContentEncoding": obj.ContentEncoding.value,
+                "ContentLength": obj.ContentLength,
+                "ContentMime": obj.ContentMime,
             }
-        return json.JSONEncoder.default(self, o)
+        return json.JSONEncoder.default(self, obj)
 
 
 class ProtocolData(QObject):

@@ -28,7 +28,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.app = app
 
         self.setWindowTitle(Accord.__appname__)
-        self.setWindowIcon(QIcon(PixmapBuilder.getQPixmapFromPath(Accord.Icons.LOGO)))
+        self.setWindowIcon(QIcon(PixmapBuilder.fromPath(Accord.Icons.LOGO)))
 
         # palette = self.palette()
         # palette.setColor(QPalette.ColorGroup.Normal, QPalette.ColorRole.Window, QColor(255, 255, 255))
@@ -38,20 +38,24 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         while not isServersDataReady:
             isServersDataReady = self.updateServers()
 
+        self.widgetMessage.setStyleSheet("background-color: #fff;")
+
         self.labelAvatar = AvatarLabel(self)
         self.layout_userInfo.insertWidget(0, self.labelAvatar)
 
         self.layout_message = QVBoxLayout(self.widgetMessage)
         self.layout_message.setDirection(QVBoxLayout.Direction.BottomToTop)
+        self.layout_message.setContentsMargins(8, 8, 8, 8)
+        self.layout_message.setSpacing(0)
         self.layout_message.addStretch()
 
         self.connectSlot()
 
         if member.hash == "":
             dialog = QMessageBox(
-                title="无效的用户hash",
-                text="请通过下方按钮更新用户hash",
-                icon=QMessageBox.Icon.Warning,
+                QMessageBox.Icon.Warning,
+                "无效的用户hash",
+                "请通过下方按钮更新用户hash",
                 parent=self,
             )
             dialog.exec()
@@ -65,9 +69,11 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.listServers.doubleClicked.connect(self.onServerListDoubleClicked)
         self.buttonServerEnter.clicked.connect(self.onButtonServerEnterClicked)
         self.buttonServerLeave.clicked.connect(client.leave)
-        self.buttonRequireHash.clicked.connect(member.updateMemberHash)
+        self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
+        self.buttonRequireHash.clicked.connect(self.onButtonRequireHashClicked)
         client.emitReceiveCtrlMsg.connect(self.setStatusLabel)
         client.emitUpdateMembersList.connect(self.updateMembersList)
+        client.emitReceiveMessage.connect(self.handleReceiveMessage)
         client.emitAcceptEnter.connect(self.handleAfterEnterServer)
         client.emitDisconnected.connect(self.handleAfterLeaveServer)
 
@@ -116,10 +122,6 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         model = AccordModel.MembersListModel()
         model.setMembersList(membersList)
         self.listMembers.setModel(model)
-        value = client.serverData
-        self.labelServerName.setText(
-            f"{value.showName} - {value.actualName}#{value.hash}"
-        )
 
     def closeEvent(self, ev):
         ev.accept()
@@ -134,17 +136,21 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
 
     def onButtonServerEnterClicked(self):
         indexes = self.listServers.selectedIndexes()
-        self.handleEnterServer(len(indexes) > 0, indexes[0])
+        self.handleEnterServer(
+            len(indexes) > 0, indexes[0] if len(indexes) > 0 else QModelIndex()
+        )
 
     def onButtonSendMessageClicked(self):
-        self.handleSendMessage()
+        text = self.editMessageContent.toPlainText()
+        if text != "":
+            self.handleSendMessage(text)
 
     def handleEnterServer(self, valid: bool, curIndex: QModelIndex):
         if not valid:
             dialog = QMessageBox(
-                text="未选择正确的服务器",
-                title="服务器进入失败",
-                icon=QMessageBox.Icon.Warning,
+                QMessageBox.Icon.Warning,
+                "未选择正确的服务器",
+                "服务器进入失败",
                 parent=self,
             )
             dialog.exec()
@@ -161,13 +167,36 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
                 client.enter(serverData)
 
     def handleAfterEnterServer(self):
-        self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
+        value = client.serverData
+        self.labelServerName.setText(
+            f"{value.showName} - {value.actualName}#{value.hash}"
+        )
+        client.updateMemberList()
 
     def handleAfterLeaveServer(self):
-        self.buttonSendMessage.clicked.disconnect(self.onButtonSendMessageClicked)
+        while not self.layout_message.itemAt(1) is None:
+            item = self.layout_message.itemAt(1)
+            self.layout_message.removeItem(item)
+            item.widget().deleteLater()
+        self.widgetMessage.update()
+        self.labelServerName.setText("未加入服务器")
+        self.updateMembersList([])
 
-    def handleSendMessage(self):
-        m = Message(self)
-        m.hide()
-        self.layout_message.addWidget(m)
-        m.show()
+    def handleSendMessage(self, text: str):
+        client.send(text)
+
+    def handleReceiveMessage(self, message: AccordData.MessageData):
+        message_widget = Message(self)
+        message_widget.hide()
+        self.layout_message.insertWidget(1, message_widget)
+        message_widget.show()
+        message_widget.setMessage(message)
+
+    def onButtonRequireHashClicked(self):
+        if client.online:
+            dialog = QMessageBox(
+                QMessageBox.Icon.Warning, "更换用户hash", "更换用户hash前,请先退出当前服务器", parent=self
+            )
+            dialog.exec()
+        else:
+            member.updateMemberHash()

@@ -2,10 +2,14 @@ from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 
 
 class SingleInstance:
-    def __init__(self, appid):
+    def __init__(self, appid, allow=False):
         self._appid = appid
         self._is_running = False
         self._server = None
+
+        if allow == True:
+            return
+
         local_socket = QLocalSocket()
         local_socket.connectToServer(appid)
 

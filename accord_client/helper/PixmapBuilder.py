@@ -8,7 +8,7 @@ from PyQt6.QtGui import QPixmap
 from accord_client import baseDir
 
 
-def getQPixmapFromPath(path: str, scaled=None) -> QPixmap:
+def fromPath(path: str, scaled=None) -> QPixmap:
     if scaled is None:
         scaled = [256, 256]
     filePath = os.path.join(baseDir, "assets", path)
@@ -16,7 +16,7 @@ def getQPixmapFromPath(path: str, scaled=None) -> QPixmap:
     return scale(pix=pix, scaled=scaled)
 
 
-def getQPixmapFromBase64(data: str, default: str, scaled=None) -> QPixmap:
+def fromBase64(data: str, default: str, scaled=None) -> QPixmap:
     if scaled is None:
         scaled = [24, 24]
     try:
@@ -32,8 +32,14 @@ def getQPixmapFromBase64(data: str, default: str, scaled=None) -> QPixmap:
 
 
 def scale(pix: QPixmap, scaled) -> QPixmap:
+    
+    if isinstance(scaled, list):
+        to_scale = QSize(scaled[0], scaled[1])
+    else:
+        to_scale = QSize(scaled)
+
     return pix.scaled(
-        QSize(scaled[0], scaled[1]),
+        to_scale,
         Qt.AspectRatioMode.KeepAspectRatio,
         Qt.TransformationMode.SmoothTransformation,
     )

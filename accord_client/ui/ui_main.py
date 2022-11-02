@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'e:\Project\netword-pragromming-cd\client\accord_client\ui\main.ui'
+# Form implementation generated from reading ui file './accord_client/ui/main.ui'
 #
 # Created by: PyQt6 UI code generator 6.4.0
 #
@@ -62,7 +62,7 @@ class Ui_AccordMainWindow(object):
         self.areaMessage.setWidgetResizable(True)
         self.areaMessage.setObjectName("areaMessage")
         self.widgetMessage = QtWidgets.QWidget()
-        self.widgetMessage.setGeometry(QtCore.QRect(0, 0, 664, 471))
+        self.widgetMessage.setGeometry(QtCore.QRect(0, 0, 664, 583))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -77,7 +77,7 @@ class Ui_AccordMainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.areaMessageEdit.sizePolicy().hasHeightForWidth())
         self.areaMessageEdit.setSizePolicy(sizePolicy)
-        self.areaMessageEdit.setMinimumSize(QtCore.QSize(0, 192))
+        self.areaMessageEdit.setMaximumSize(QtCore.QSize(16777215, 128))
         self.areaMessageEdit.setObjectName("areaMessageEdit")
         self.gridLayout = QtWidgets.QGridLayout(self.areaMessageEdit)
         self.gridLayout.setObjectName("gridLayout")
@@ -87,14 +87,14 @@ class Ui_AccordMainWindow(object):
         self.pushButton_6 = QtWidgets.QPushButton(self.areaMessageEdit)
         self.pushButton_6.setObjectName("pushButton_6")
         self.gridLayout.addWidget(self.pushButton_6, 0, 1, 1, 1)
-        self.editMessageContenet = QtWidgets.QTextEdit(self.areaMessageEdit)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
+        self.editMessageContent = QtWidgets.QTextEdit(self.areaMessageEdit)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.editMessageContenet.sizePolicy().hasHeightForWidth())
-        self.editMessageContenet.setSizePolicy(sizePolicy)
-        self.editMessageContenet.setObjectName("editMessageContenet")
-        self.gridLayout.addWidget(self.editMessageContenet, 1, 0, 1, 4)
+        sizePolicy.setHeightForWidth(self.editMessageContent.sizePolicy().hasHeightForWidth())
+        self.editMessageContent.setSizePolicy(sizePolicy)
+        self.editMessageContent.setObjectName("editMessageContent")
+        self.gridLayout.addWidget(self.editMessageContent, 1, 0, 1, 4)
         self.pushButton_5 = QtWidgets.QPushButton(self.areaMessageEdit)
         self.pushButton_5.setObjectName("pushButton_5")
         self.gridLayout.addWidget(self.pushButton_5, 0, 0, 1, 1)
@@ -113,7 +113,6 @@ class Ui_AccordMainWindow(object):
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.userView)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.labelServerName = QtWidgets.QLabel(self.userView)
-        self.labelServerName.setText("")
         self.labelServerName.setObjectName("labelServerName")
         self.verticalLayout_3.addWidget(self.labelServerName)
         self.listMembers = QtWidgets.QListView(self.userView)
@@ -128,7 +127,7 @@ class Ui_AccordMainWindow(object):
         self.userInfo = QtWidgets.QFrame(self.centralwidget)
         self.userInfo.setObjectName("userInfo")
         self.layout_userInfo = QtWidgets.QHBoxLayout(self.userInfo)
-        self.layout_userInfo.setObjectName("horizontalLayout_userInfo")
+        self.layout_userInfo.setObjectName("layout_userInfo")
         self.textInputName = QtWidgets.QLineEdit(self.userInfo)
         self.textInputName.setObjectName("textInputName")
         self.layout_userInfo.addWidget(self.textInputName)
@@ -183,6 +182,17 @@ class Ui_AccordMainWindow(object):
         self.buttonSendMessage.setText(_translate("AccordMainWindow", "发送"))
         self.pushButton_6.setText(_translate("AccordMainWindow", "PushButton"))
         self.pushButton_5.setText(_translate("AccordMainWindow", "PushButton"))
+        self.labelServerName.setText(_translate("AccordMainWindow", "未加入服务器"))
         self.buttonRequireHash.setText(_translate("AccordMainWindow", "更新hash"))
         self.labelHash.setText(_translate("AccordMainWindow", "# "))
         self.buttonSettings.setText(_translate("AccordMainWindow", "设置"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    AccordMainWindow = QtWidgets.QMainWindow()
+    ui = Ui_AccordMainWindow()
+    ui.setupUi(AccordMainWindow)
+    AccordMainWindow.show()
+    sys.exit(app.exec())

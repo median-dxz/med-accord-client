@@ -1,9 +1,5 @@
 import os
 
-from . import settings
-from .helper import DataBuilder, PixmapBuilder
-from .helper.SignalWaiter import SignalWaiter
-
 __version__ = "0.0.1"
 __appname__ = "Accord"
 __comment__ = "Accord Client for Windows Desktop"
@@ -15,6 +11,10 @@ __author__ = "Median-dxz"
 __licence__ = "GNU General Public License v3.0"
 
 baseDir = os.path.dirname(__file__)
+
+from . import settings
+from .helper import DataBuilder, PixmapBuilder
+from .helper.SignalWaiter import SignalWaiter
 
 
 class Icons:

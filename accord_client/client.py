@@ -19,14 +19,17 @@ class ClientController(QObject):
     emitDisconnected = pyqtSignal()
     emitReceiveCtrlMsg = pyqtSignal(str, str)
     emitUpdateMembersList = pyqtSignal(list)
+    emitReceiveMessage = pyqtSignal(AccordData.MessageData)
     emitAcceptEnter = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
         self.promise = None
+        self._online = False
 
         self._socket = QTcpSocket()
         self._socket.readyRead.connect(self.receive)
+        self._socket.connected.connect(self.connected)
         self._socket.disconnected.connect(self.disconnected)
 
         self.protocolData = protocol.ProtocolData(bytearray())
@@ -41,6 +44,10 @@ class ClientController(QObject):
         self.protocolData = protocol.ProtocolData(bytearray())
         self.serverData = AccordData.ServerData()
 
+    @property
+    def online(self):
+        return self._online
+
     def connect(self):
         [host, port] = settings.get_value("AccordServer", ["host", "port"])
         port = int(port)
@@ -54,10 +61,14 @@ class ClientController(QObject):
         self._socket.connectToHost(QHostAddress(host), port)
         self.protocolData.readyConsume.connect(self.consume)
 
+    def connected(self):
+        self._online = True
+
     def disconnected(self):
         print("[Accord]: Close Connection")
         self.init()
         self.emitDisconnected.emit()
+        self._online = False
 
     def receive(self):
         print("[Accord]: Client<<Server")
@@ -80,6 +91,12 @@ class ClientController(QObject):
         self.promise = SignalWaiter(self._socket.connected, self.connect)  # type: ignore
         self.promise.then(lambda: self.request(ActionType.ENTER))
 
+    def send(self, messageText: str):
+        self.request(ActionType.SEND_MESSAGE, messageText.encode("utf8"))
+    
+    def updateMemberList(self):
+        self.request(ActionType.UPDATE_MEMBERS)
+
     def consume(self, header: protocol.ProtocolHeader, body: bytes):
         decode_body = body.decode("utf8")
         match header.Action:
@@ -100,12 +117,17 @@ class ClientController(QObject):
                 print(memberList)
                 self.emitUpdateMembersList.emit(memberList)
 
+            case ActionType.RECEIVE_MESSAGE:
+                message = json.loads(decode_body, object_hook=DataBuilder.message)
+                print(message)
+                self.emitReceiveMessage.emit(message)
+
             case _:
                 self.emitReceiveCtrlMsg.emit(decode_body, header.Action.value)
         print(decode_body, header.Action)
 
-    def request(self, action: ActionType):
-        body = b""
+    def request(self, action: ActionType, body_arg=b""):
+        body = body_arg
         content = ""
         match action:
             case ActionType.ENTER:
@@ -121,6 +143,18 @@ class ClientController(QObject):
                 )
             case ActionType.LEAVE:
                 content = "离开服务器"
+            case ActionType.SEND_MESSAGE:
+                content = json.dumps(
+                    AccordData.MessageData(
+                        avatar=member.avatar,
+                        name=member.name,
+                        content=body.decode("utf8"),
+                    ),
+                    cls=AccordData.MessageEncoder,
+                    ensure_ascii=False,
+                )
+            case ActionType.UPDATE_MEMBERS:
+                content = "更新用户列表"
 
         body = content.encode("utf8")
         header = protocol.ProtocolHeader(

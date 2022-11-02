@@ -1,4 +1,7 @@
+import json
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 
 
 @dataclass
@@ -15,3 +18,31 @@ class MemberData:
     avatar: str = field(default="")
 
 
+class MessageType(Enum):
+    IMAGE = "image"
+    FILE = "file"
+    TEXT = "text"
+
+
+@dataclass
+class MessageData:
+    index: int = field(default=-1)
+    type: MessageType = field(default=MessageType.TEXT)
+    avatar: str = field(default="")
+    name: str = field(default="")
+    date: datetime = field(default_factory=datetime.now)
+    content: str = field(default="")
+
+
+class MessageEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, MessageData):
+            return {
+                "index": obj.index,
+                "type": obj.type.value,
+                "content": obj.content,
+                "date": int(obj.date.timestamp()),
+                "name": obj.name,
+                "avatar": obj.avatar,
+            }
+        return json.JSONEncoder.default(self, obj)

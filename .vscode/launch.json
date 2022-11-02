@@ -9,7 +9,10 @@
             "type": "python",
             "request": "launch",
             "module": "accord_client",
-            "justMyCode": true
+            "justMyCode": true,
+            "args": [
+                "--debug"
+            ]
         },
         {
             "name": "Python: Current File",
