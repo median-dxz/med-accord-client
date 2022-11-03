@@ -1,5 +1,6 @@
 import json
 import sys
+import typing
 from datetime import datetime
 
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -20,7 +21,7 @@ class ClientController(QObject):
     emitDisconnected = pyqtSignal()
     emitReceiveCtrlMsg = pyqtSignal(str, str)
     emitUpdateMembersList = pyqtSignal(list)
-    emitReceiveMessage = pyqtSignal(AccordData.MessageData)
+    emitReceiveMessages = pyqtSignal(list)
     emitAcceptEnter = pyqtSignal()
 
     def __init__(self) -> None:
@@ -98,7 +99,11 @@ class ClientController(QObject):
     def updateMemberList(self):
         self.request(ActionType.UPDATE_MEMBERS)
 
-    def getHistoryMessage(self, max_limit=30, timestamp=datetime.now()):
+    def getHistoryMessage(
+        self, timestamp: typing.Optional[datetime] = None, max_limit=30
+    ):
+        if timestamp is None:
+            timestamp = datetime.now()
         self.request(ActionType.HISTORY_MESSAGES, limit=max_limit, timestamp=timestamp)
 
     def consume(self, header: protocol.ProtocolHeader, body: bytes):
@@ -121,9 +126,9 @@ class ClientController(QObject):
                 )
                 self.emitUpdateMembersList.emit(memberList)
 
-            case ActionType.RECEIVE_MESSAGE:
+            case ActionType.RECEIVE_MESSAGES:
                 message = json.loads(decode_body, object_hook=DataBuilder.message)
-                self.emitReceiveMessage.emit(message)
+                self.emitReceiveMessages.emit(message)
 
             case _:
                 self.emitReceiveCtrlMsg.emit(decode_body, header.Action.value)

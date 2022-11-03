@@ -73,7 +73,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.buttonRequireHash.clicked.connect(self.onButtonRequireHashClicked)
         client.emitReceiveCtrlMsg.connect(self.setStatusLabel)
         client.emitUpdateMembersList.connect(self.updateMembersList)
-        client.emitReceiveMessage.connect(self.handleReceiveMessage)
+        client.emitReceiveMessages.connect(self.handleReceiveMessages)
         client.emitAcceptEnter.connect(self.handleAfterEnterServer)
         client.emitDisconnected.connect(self.handleAfterLeaveServer)
 
@@ -186,12 +186,13 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
     def handleSendMessage(self, text: str):
         client.send(text)
 
-    def handleReceiveMessage(self, message: AccordData.MessageData):
-        message_widget = Message(self)
-        message_widget.hide()
-        self.layout_message.insertWidget(1, message_widget)
-        message_widget.show()
-        message_widget.setMessage(message)
+    def handleReceiveMessages(self, messages: list[AccordData.MessageData]):
+        for message in messages:
+            message_widget = Message(self)
+            message_widget.hide()
+            self.layout_message.insertWidget(1, message_widget)
+            message_widget.show()
+            message_widget.setMessage(message)
 
     def onButtonRequireHashClicked(self):
         if client.online:

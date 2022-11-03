@@ -66,7 +66,9 @@ class ProtocolData(QObject):
         self.body: typing.Optional[bytearray] = None
         self.consumed = False
 
-    def onData(self, data: bytearray = bytearray()):
+    def onData(self, data: typing.Optional[bytearray] = None):
+        if data is None:
+            data = bytearray()
         self.chunk += bytearray(data)
         buf = bytearray(self.chunk)
         bytesRead = 0

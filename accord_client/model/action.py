@@ -12,7 +12,7 @@ class ActionType(Enum):
     REFUSE = "refuse"
     UPDATE_MEMBERS = "updateMemberList"
     SEND_MESSAGE = "sendMessage"
-    RECEIVE_MESSAGE = "receiveMessage"
+    RECEIVE_MESSAGES = "receiveMessage"
     HISTORY_MESSAGES = "historyMessages"
     UNKNOWN = "unknown"
 
