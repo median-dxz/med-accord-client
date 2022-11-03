@@ -142,7 +142,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
 
     def onButtonSendMessageClicked(self):
         text = self.editMessageContent.toPlainText()
-        if text != "":
+        if (text != "") & (client.online):
             self.handleSendMessage(text)
 
     def handleEnterServer(self, valid: bool, curIndex: QModelIndex):
@@ -172,6 +172,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             f"{value.showName} - {value.actualName}#{value.hash}"
         )
         client.updateMemberList()
+        client.getHistoryMessage()
 
     def handleAfterLeaveServer(self):
         while not self.layout_message.itemAt(1) is None:

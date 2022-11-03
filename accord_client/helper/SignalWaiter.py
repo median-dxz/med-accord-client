@@ -25,7 +25,7 @@ class SignalWaiter(QObject):
 
     def resolver(self):
         self.state = self.State.FULFILLED
-        if not self.callback is None:
-            self.callback()
         self.signal.disconnect(self.resolver)
         self.deleteLater()
+        if not self.callback is None:
+            self.callback()

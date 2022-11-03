@@ -55,4 +55,4 @@ class Message(QtWidgets.QWidget):
             PixmapBuilder.fromBase64(message.avatar, Icons.AVATAR, [36, 36])
         )
         self.lab_username.setText(message.name)
-        self.lab_time.setText(message.date.strftime("%d/%m/%y %H:%M:%S"))
+        self.lab_time.setText(message.date.strftime("%m/%d %H:%M:%S"))

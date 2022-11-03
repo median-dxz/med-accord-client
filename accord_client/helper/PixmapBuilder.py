@@ -23,6 +23,8 @@ def fromBase64(data: str, default: str, scaled=None) -> QPixmap:
         byteData = base64.b64decode(data)
     except binascii.Error:
         byteData = b""
+    except TypeError:
+        byteData = b""
     pix = QPixmap()
     pix.loadFromData(byteData)  # type: ignore
     if pix.isNull():

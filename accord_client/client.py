@@ -1,5 +1,6 @@
 import json
 import sys
+from datetime import datetime
 
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtNetwork import QAbstractSocket, QHostAddress, QTcpSocket
@@ -32,8 +33,7 @@ class ClientController(QObject):
         self._socket.connected.connect(self.connected)
         self._socket.disconnected.connect(self.disconnected)
 
-        self.protocolData = protocol.ProtocolData(bytearray())
-        self.serverData = AccordData.ServerData()
+        self.init()
 
     def __new__(cls, *args, **kw):
         if cls._instance is None:
@@ -41,7 +41,9 @@ class ClientController(QObject):
         return cls._instance
 
     def init(self):
-        self.protocolData = protocol.ProtocolData(bytearray())
+        self.protocolData = protocol.ProtocolData()
+        self.protocolData.readyConsume.connect(self.consume)
+
         self.serverData = AccordData.ServerData()
 
     @property
@@ -59,7 +61,6 @@ class ClientController(QObject):
 
         self._socket.setSocketOption(QAbstractSocket.SocketOption.KeepAliveOption, 1)
         self._socket.connectToHost(QHostAddress(host), port)
-        self.protocolData.readyConsume.connect(self.consume)
 
     def connected(self):
         self._online = True
@@ -72,12 +73,12 @@ class ClientController(QObject):
 
     def receive(self):
         print("[Accord]: Client<<Server")
-        if self.protocolData.consumed:
-            chunk = self.protocolData.chunk
-            self.protocolData = protocol.ProtocolData(chunk)
-            self.protocolData.readyConsume.connect(self.consume)
 
         self.protocolData.onData(self._socket.readAll())  # type: ignore
+
+        while self.protocolData.consumed:
+            self.protocolData.init()
+            self.protocolData.onData()
 
     def leave(self):
         # print(self._socket.state())
@@ -92,13 +93,17 @@ class ClientController(QObject):
         self.promise.then(lambda: self.request(ActionType.ENTER))
 
     def send(self, messageText: str):
-        self.request(ActionType.SEND_MESSAGE, messageText.encode("utf8"))
-    
+        self.request(ActionType.SEND_MESSAGE, messageText)
+
     def updateMemberList(self):
         self.request(ActionType.UPDATE_MEMBERS)
 
+    def getHistoryMessage(self, max_limit=30, timestamp=datetime.now()):
+        self.request(ActionType.HISTORY_MESSAGES, limit=max_limit, timestamp=timestamp)
+
     def consume(self, header: protocol.ProtocolHeader, body: bytes):
         decode_body = body.decode("utf8")
+        print(decode_body, header.Action)
         match header.Action:
             case ActionType.ACCEPT:
                 actionData: AccordAction.ActionAccept = json.loads(
@@ -114,20 +119,17 @@ class ClientController(QObject):
                 memberList = json.loads(
                     decode_body, object_hook=DataBuilder.update_members_list
                 )
-                print(memberList)
                 self.emitUpdateMembersList.emit(memberList)
 
             case ActionType.RECEIVE_MESSAGE:
                 message = json.loads(decode_body, object_hook=DataBuilder.message)
-                print(message)
                 self.emitReceiveMessage.emit(message)
 
             case _:
                 self.emitReceiveCtrlMsg.emit(decode_body, header.Action.value)
-        print(decode_body, header.Action)
 
-    def request(self, action: ActionType, body_arg=b""):
-        body = body_arg
+    def request(self, action: ActionType, *body_arg, **kw_args):
+        body = b""
         content = ""
         match action:
             case ActionType.ENTER:
@@ -148,13 +150,21 @@ class ClientController(QObject):
                     AccordData.MessageData(
                         avatar=member.avatar,
                         name=member.name,
-                        content=body.decode("utf8"),
+                        content=body_arg[0],
                     ),
                     cls=AccordData.MessageEncoder,
                     ensure_ascii=False,
                 )
             case ActionType.UPDATE_MEMBERS:
                 content = "更新用户列表"
+            case ActionType.HISTORY_MESSAGES:
+                content = json.dumps(
+                    AccordAction.ActionHistoryMessages(
+                        limit=kw_args["limit"], timestamp=kw_args["timestamp"]
+                    ),
+                    cls=AccordAction.ActionEncoder,
+                    ensure_ascii=False,
+                )
 
         body = content.encode("utf8")
         header = protocol.ProtocolHeader(

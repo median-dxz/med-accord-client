@@ -55,16 +55,19 @@ class ProtocolHeaderEncoder(json.JSONEncoder):
 class ProtocolData(QObject):
     readyConsume = pyqtSignal(ProtocolHeader, bytearray)
 
-    def __init__(self, chunk) -> None:
+    def __init__(self) -> None:
         super().__init__()
+        self.chunk = bytearray()
+        self.init()
+
+    def init(self):
         self.fixedLength: int = 0
         self.header: typing.Optional[ProtocolHeader] = None
         self.body: typing.Optional[bytearray] = None
-        self.chunk = chunk
         self.consumed = False
 
-    def onData(self, data: bytearray):
-        self.chunk += data
+    def onData(self, data: bytearray = bytearray()):
+        self.chunk += bytearray(data)
         buf = bytearray(self.chunk)
         bytesRead = 0
         bytesToRead = 4
