@@ -99,6 +99,9 @@ class ClientController(QObject):
     def updateMemberList(self):
         self.request(ActionType.UPDATE_MEMBERS)
 
+    def setMemberInfo(self):
+        self.request(ActionType.SET_MEMBER)
+
     def getHistoryMessage(
         self, timestamp: typing.Optional[datetime] = None, max_limit=30
     ):
@@ -162,6 +165,15 @@ class ClientController(QObject):
                 )
             case ActionType.UPDATE_MEMBERS:
                 content = "更新用户列表"
+            case ActionType.SET_MEMBER:
+                content = json.dumps(
+                    AccordAction.ActionSetMember(
+                        avatar=member.avatar,
+                        name=member.name,
+                    ),
+                    cls=ActionEncoder,
+                    ensure_ascii=False,
+                )
             case ActionType.HISTORY_MESSAGES:
                 content = json.dumps(
                     AccordAction.ActionHistoryMessages(

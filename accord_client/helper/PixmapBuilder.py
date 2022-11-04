@@ -16,6 +16,13 @@ def fromPath(path: str, scaled=None) -> QPixmap:
     return scale(pix=pix, scaled=scaled)
 
 
+def toBase64fromPath(path: str) -> str:
+    with open(path, "rb") as f:
+        byteData = base64.encodebytes(f.read())
+
+    return byteData.decode("utf8")
+
+
 def fromBase64(data: str, default: str, scaled=None) -> QPixmap:
     if scaled is None:
         scaled = [24, 24]
@@ -34,7 +41,7 @@ def fromBase64(data: str, default: str, scaled=None) -> QPixmap:
 
 
 def scale(pix: QPixmap, scaled) -> QPixmap:
-    
+
     if isinstance(scaled, list):
         to_scale = QSize(scaled[0], scaled[1])
     else:

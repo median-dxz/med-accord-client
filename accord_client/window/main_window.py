@@ -1,6 +1,8 @@
+import os
 from datetime import datetime
 
-from PyQt6.QtCore import QModelIndex, Qt
+from PyQt6 import QtWidgets
+from PyQt6.QtCore import QFileInfo, QModelIndex, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QVBoxLayout
 from requests.exceptions import Timeout
@@ -71,13 +73,15 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.buttonServerLeave.clicked.connect(client.leave)
         self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
         self.buttonRequireHash.clicked.connect(self.onButtonRequireHashClicked)
+        self.labelAvatar.doubleClicked.connect(self.changeAvatar)
+        self.textInputName.editingFinished.connect(self.changeMemberName)
         client.emitReceiveCtrlMsg.connect(self.setStatusLabel)
         client.emitUpdateMembersList.connect(self.updateMembersList)
         client.emitReceiveMessages.connect(self.handleReceiveMessages)
         client.emitAcceptEnter.connect(self.handleAfterEnterServer)
         client.emitDisconnected.connect(self.handleAfterLeaveServer)
-
         member.emitUpdateHash.connect(self.labelHash.setText)
+        member.emitUpdateInfo.connect(self.handleUpdateMemberInfo)
 
     def updateServers(self) -> bool:
         dialog = QMessageBox(
@@ -118,18 +122,61 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             else:
                 return False
 
+    def closeEvent(self, ev):
+        if client.online:
+            self.promise = SignalWaiter(client.emitAcceptEnter, lambda: client.leave())
+            self.promise.then(ev.accept)
+        else:
+            ev.accept()
+
     def updateMembersList(self, membersList):
         model = AccordModel.MembersListModel()
         model.setMembersList(membersList)
         self.listMembers.setModel(model)
 
-    def closeEvent(self, ev):
-        ev.accept()
-
     def setStatusLabel(self, msg, action):
         now = datetime.now()
         time_str = now.strftime("%m-%d %H:%M:%S")
         self.labelStatus.setText(f"[{time_str}] {action}: {msg}")
+
+    def changeAvatar(self):
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "选择头像文件",
+            os.path.join(
+                os.environ["userprofile"] if os.getenv("userprofile") else os.getcwd(),
+                "pictures",
+            ),
+            "图片文件 (*.png *.jpg *.svg)",
+        )
+        file_info = QFileInfo(file_name)
+        if not file_info.exists():
+            return
+
+        if file_info.size() > 64 * 1024:  # 64KB
+            QMessageBox(
+                QMessageBox.Icon.Warning, "无法上传", "头像文件大小超过限制(>64KB)", parent=self
+            ).exec()
+            return
+
+        member.avatar = PixmapBuilder.toBase64fromPath(file_name)
+        self.labelAvatar.setAvatar(PixmapBuilder.fromPath(file_name))
+
+    def changeMemberName(self):
+        new_name = self.textInputName.text()
+        if member.name == new_name:
+            return
+        result = QMessageBox(
+            QMessageBox.Icon.Question,
+            "更改用户名",
+            f"确定要将名称改为{new_name}吗?",
+            QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Yes,
+            self,
+        ).exec()
+        if result == QMessageBox.StandardButton.Yes:
+            member.name = new_name
+        elif result == QMessageBox.StandardButton.Discard:
+            self.textInputName.setText(member.name)
 
     def onServerListDoubleClicked(self, curIndex: QModelIndex):
         self.handleEnterServer(curIndex.isValid(), curIndex)
@@ -144,6 +191,15 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         text = self.editMessageContent.toPlainText()
         if (text != "") & (client.online):
             self.handleSendMessage(text)
+
+    def onButtonRequireHashClicked(self):
+        if client.online:
+            dialog = QMessageBox(
+                QMessageBox.Icon.Warning, "更换用户hash", "更换用户hash前,请先退出当前服务器", parent=self
+            )
+            dialog.exec()
+        else:
+            member.updateMemberHash()
 
     def handleEnterServer(self, valid: bool, curIndex: QModelIndex):
         if not valid:
@@ -194,11 +250,6 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             message_widget.show()
             message_widget.setMessage(message)
 
-    def onButtonRequireHashClicked(self):
+    def handleUpdateMemberInfo(self):
         if client.online:
-            dialog = QMessageBox(
-                QMessageBox.Icon.Warning, "更换用户hash", "更换用户hash前,请先退出当前服务器", parent=self
-            )
-            dialog.exec()
-        else:
-            member.updateMemberHash()
+            client.setMemberInfo()

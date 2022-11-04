@@ -11,6 +11,7 @@ class ActionType(Enum):
     ACCEPT = "accept"
     REFUSE = "refuse"
     UPDATE_MEMBERS = "updateMemberList"
+    SET_MEMBER = "setMemberInfo"
     SEND_MESSAGE = "sendMessage"
     RECEIVE_MESSAGES = "receiveMessage"
     HISTORY_MESSAGES = "historyMessages"
@@ -37,6 +38,12 @@ class ActionHistoryMessages:
     timestamp: datetime = field(default_factory=datetime.now)
 
 
+@dataclass
+class ActionSetMember:
+    avatar: str = field(default="")
+    name: str = field(default="")
+
+
 class ActionEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, ActionEnter):
@@ -50,5 +57,10 @@ class ActionEncoder(json.JSONEncoder):
             return {
                 "limit": obj.limit,
                 "timestamp": int(obj.timestamp.timestamp()),
+            }
+        if isinstance(obj, ActionSetMember):
+            return {
+                "avatar": obj.avatar,
+                "name": obj.name,
             }
         return json.JSONEncoder.default(self, obj)

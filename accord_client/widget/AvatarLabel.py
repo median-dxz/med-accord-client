@@ -1,5 +1,5 @@
-from PyQt6.QtCore import QFileInfo, QSize, Qt
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtCore import QSize, pyqtSignal
+from PyQt6.QtGui import QMouseEvent, QPixmap
 from PyQt6.QtWidgets import QLabel
 
 from accord_client import Icons, PixmapBuilder
@@ -18,6 +18,7 @@ AvatarLabel:hover {{
 
 class AvatarLabel(QLabel):
 
+    doubleClicked = pyqtSignal()
     radius = 18
     avatar: QPixmap
 
@@ -33,3 +34,7 @@ class AvatarLabel(QLabel):
         else:
             self.avatar = PixmapBuilder.fromPath(Icons.AVATAR, self.size())
         self.setPixmap(self.avatar)
+
+    def mouseDoubleClickEvent(self, a0: QMouseEvent) -> None:
+        self.doubleClicked.emit()
+        return super().mouseDoubleClickEvent(a0)
