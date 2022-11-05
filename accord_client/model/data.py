@@ -11,6 +11,9 @@ class ServerData:
     actualName: str = field(default="")
     icon: str = field(default="")
 
+    def __format__(self, __format_spec: str) -> str:
+        return f"{self.showName} - {self.actualName}#{self.hash}"
+
 
 @dataclass
 class MemberData:

@@ -19,7 +19,7 @@ class ServerDataModel(QAbstractListModel):
             case Qt.ItemDataRole.DisplayRole:
                 return value.showName
             case Qt.ItemDataRole.ToolTipRole:
-                return f"{value.showName} - {value.actualName}#{value.hash}"
+                return format(value)
             case Qt.ItemDataRole.DecorationRole:
                 return PixmapBuilder.fromBase64(value.icon, Icons.SERVER)
             case Qt.ItemDataRole.UserRole:

@@ -1,8 +1,9 @@
 import os
+import time
 from datetime import datetime
 
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import QFileInfo, QModelIndex, Qt
+from PyQt6.QtCore import QFileInfo, QModelIndex, Qt, QTimerEvent
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QVBoxLayout
 from requests.exceptions import Timeout
@@ -17,6 +18,7 @@ from accord_client.member import MemberController
 from accord_client.ui import ui_main
 from accord_client.widget.AvatarLabel import AvatarLabel
 from accord_client.widget.Message import Message
+from accord_client.window.dialog_create_server import DialogCreateServer
 
 client = ClientController()
 member = MemberController()
@@ -31,10 +33,6 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
 
         self.setWindowTitle(Accord.__appname__)
         self.setWindowIcon(QIcon(PixmapBuilder.fromPath(Accord.Icons.LOGO)))
-
-        # palette = self.palette()
-        # palette.setColor(QPalette.ColorGroup.Normal, QPalette.ColorRole.Window, QColor(255, 255, 255))
-        # self.setPalette(palette)
 
         isServersDataReady: bool = False
         while not isServersDataReady:
@@ -60,17 +58,31 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
                 "请通过下方按钮更新用户hash",
                 parent=self,
             )
-            dialog.exec()
+            dialog.open()
         else:
             self.labelHash.setText(f"#{member.hash}")
 
         self.textInputName.setText(member.name)
         self.labelAvatar.setAvatar(member.getAvatarPixmap())
 
+        self.dialogCreateServer = DialogCreateServer(self)
+        self.dialogWaitingAcceptEnter = QMessageBox(
+            QMessageBox.Icon.Information,
+            "加入服务器",
+            "",
+            parent=self,
+        )
+        button = QtWidgets.QPushButton("确认", self.dialogWaitingAcceptEnter)
+        button.setDisabled(True)
+        self.dialogWaitingAcceptEnter.addButton(
+            button, QMessageBox.ButtonRole.AcceptRole
+        )
+
     def connectSlot(self):
         self.listServers.doubleClicked.connect(self.onServerListDoubleClicked)
         self.buttonServerEnter.clicked.connect(self.onButtonServerEnterClicked)
         self.buttonServerLeave.clicked.connect(client.leave)
+        self.buttonServerCreate.clicked.connect(self.onButtonServerCreate)
         self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
         self.buttonRequireHash.clicked.connect(self.onButtonRequireHashClicked)
         self.labelAvatar.doubleClicked.connect(self.changeAvatar)
@@ -129,6 +141,12 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         else:
             ev.accept()
 
+    def timerEvent(self, e: QTimerEvent) -> None:
+        if e.timerId() == self.timerAcceptEnter:
+            self.dialogWaitingAcceptEnter.accept()
+            self.killTimer(self.timerAcceptEnter)
+        return super().timerEvent(e)
+
     def updateMembersList(self, membersList):
         model = AccordModel.MembersListModel()
         model.setMembersList(membersList)
@@ -156,7 +174,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         if file_info.size() > 64 * 1024:  # 64KB
             QMessageBox(
                 QMessageBox.Icon.Warning, "无法上传", "头像文件大小超过限制(>64KB)", parent=self
-            ).exec()
+            ).open()
             return
 
         member.avatar = PixmapBuilder.toBase64fromPath(file_name)
@@ -179,13 +197,13 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             self.textInputName.setText(member.name)
 
     def onServerListDoubleClicked(self, curIndex: QModelIndex):
-        self.handleEnterServer(curIndex.isValid(), curIndex)
+        if curIndex.isValid():
+            self.handleEnterServer(curIndex)
 
     def onButtonServerEnterClicked(self):
         indexes = self.listServers.selectedIndexes()
-        self.handleEnterServer(
-            len(indexes) > 0, indexes[0] if len(indexes) > 0 else QModelIndex()
-        )
+        if len(indexes) == 1:
+            self.handleEnterServer(indexes[0])
 
     def onButtonSendMessageClicked(self):
         text = self.editMessageContent.toPlainText()
@@ -197,38 +215,35 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             dialog = QMessageBox(
                 QMessageBox.Icon.Warning, "更换用户hash", "更换用户hash前,请先退出当前服务器", parent=self
             )
-            dialog.exec()
+            dialog.open()
         else:
             member.updateMemberHash()
 
-    def handleEnterServer(self, valid: bool, curIndex: QModelIndex):
-        if not valid:
-            dialog = QMessageBox(
-                QMessageBox.Icon.Warning,
-                "未选择正确的服务器",
-                "服务器进入失败",
-                parent=self,
-            )
-            dialog.exec()
-        else:
-            serverData: AccordData.ServerData = self.listServers.model().data(
-                curIndex, Qt.ItemDataRole.UserRole
-            )
-            if (serverData.hash != client.serverData.hash) & (
-                client.serverData.hash != ""
-            ):
-                self.promise = SignalWaiter(client.emitDisconnected, client.leave)
-                self.promise.then(lambda: client.enter(serverData))
-            elif client.serverData.hash == "":
-                client.enter(serverData)
+    def onButtonServerCreate(self):
+        self.dialogCreateServer.show()
+
+    def handleEnterServer(self, curIndex: QModelIndex):
+        serverData: AccordData.ServerData = self.listServers.model().data(
+            curIndex, Qt.ItemDataRole.UserRole
+        )
+
+        def enter():
+            client.enter(serverData)
+            self.dialogWaitingAcceptEnter.setText(format(serverData) + "\n正在加入中...")
+            self.dialogWaitingAcceptEnter.open()
+
+        if (serverData.hash != client.serverData.hash) & (client.serverData.hash != ""):
+            self.promise = SignalWaiter(client.emitDisconnected, client.leave)
+            self.promise.then(enter)
+        elif client.serverData.hash == "":
+            enter()
 
     def handleAfterEnterServer(self):
-        value = client.serverData
-        self.labelServerName.setText(
-            f"{value.showName} - {value.actualName}#{value.hash}"
-        )
+        self.dialogWaitingAcceptEnter.setText(format(client.serverData) + "\n已加入")
+        self.labelServerName.setText(format(client.serverData))
         client.updateMemberList()
         client.getHistoryMessage()
+        self.timerAcceptEnter = self.startTimer(800)
 
     def handleAfterLeaveServer(self):
         while not self.layout_message.itemAt(1) is None:
