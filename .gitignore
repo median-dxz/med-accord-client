@@ -39,12 +39,6 @@ Thumbs.db
 # qtcreator generated files
 *.pro.user*
 
-# xemacs temporary files
-*.flc
-
-# Vim temporary files
-.*.swp
-
 # Visual Studio generated files
 *.ib_pdb_index
 *.idb
@@ -77,3 +71,6 @@ venv
 build
 dist
 __pycache__
+
+# Project Specical
+**/config/*.ini
