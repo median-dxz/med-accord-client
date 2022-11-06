@@ -127,35 +127,37 @@
              <height>128</height>
             </size>
            </property>
-           <layout class="QGridLayout" name="gridLayout">
-            <item row="0" column="3">
-             <widget class="QPushButton" name="buttonSendMessage">
+           <layout class="QGridLayout" name="layout_areaMessageEdit">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QPushButton" name="buttonEditMessage">
               <property name="text">
-               <string>发送</string>
+               <string>编辑</string>
               </property>
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QPushButton" name="pushButton_6">
+             <widget class="QPushButton" name="buttonPreviewMessage">
               <property name="text">
-               <string>PushButton</string>
+               <string>预览</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="0" colspan="4">
-             <widget class="QTextEdit" name="editMessageContent">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
-             <widget class="QPushButton" name="pushButton_5">
+            <item row="0" column="3">
+             <widget class="QPushButton" name="buttonSendMessage">
               <property name="text">
-               <string>PushButton</string>
+               <string>发送</string>
               </property>
              </widget>
             </item>
@@ -171,6 +173,15 @@
                </size>
               </property>
              </spacer>
+            </item>
+            <item row="1" column="0" colspan="4">
+             <widget class="QStackedWidget" name="stackedMessageEdit">
+              <property name="currentIndex">
+               <number>0</number>
+              </property>
+              <widget class="QTextEdit" name="editMessageContent"/>
+              <widget class="QTextBrowser" name="browserMessageContent"/>
+             </widget>
             </item>
            </layout>
           </widget>
@@ -211,7 +222,7 @@
     <item row="1" column="0">
      <layout class="QHBoxLayout" name="footerLayout">
       <property name="spacing">
-       <number>16</number>
+       <number>12</number>
       </property>
       <property name="leftMargin">
        <number>4</number>

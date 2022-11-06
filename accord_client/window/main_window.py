@@ -82,11 +82,24 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.listServers.doubleClicked.connect(self.onServerListDoubleClicked)
         self.buttonServerEnter.clicked.connect(self.onButtonServerEnterClicked)
         self.buttonServerLeave.clicked.connect(client.leave)
-        self.buttonServerCreate.clicked.connect(self.onButtonServerCreate)
+        self.buttonServerCreate.clicked.connect(self.onButtonServerCreateClicked)
         self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
         self.buttonRequireHash.clicked.connect(self.onButtonRequireHashClicked)
+        self.buttonSettings.clicked.connect(self.onButtonSettingsClicked)
         self.labelAvatar.doubleClicked.connect(self.changeAvatar)
         self.textInputName.editingFinished.connect(self.changeMemberName)
+
+        self.editMessageContent.textChanged.connect(
+            lambda: self.browserMessageContent.setMarkdown(
+                f"**预览模式:** <br/>" + self.editMessageContent.toPlainText()
+            )
+        )
+        self.buttonEditMessage.clicked.connect(
+            lambda: self.stackedMessageEdit.setCurrentIndex(0)
+        )
+        self.buttonPreviewMessage.clicked.connect(
+            lambda: self.stackedMessageEdit.setCurrentIndex(1)
+        )
         client.emitReceiveCtrlMsg.connect(self.setStatusLabel)
         client.emitUpdateMembersList.connect(self.updateMembersList)
         client.emitReceiveMessages.connect(self.handleReceiveMessages)
@@ -158,27 +171,12 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.labelStatus.setText(f"[{time_str}] {action}: {msg}")
 
     def changeAvatar(self):
-        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self,
-            "选择头像文件",
-            os.path.join(
-                os.environ["userprofile"] if os.getenv("userprofile") else os.getcwd(),
-                "pictures",
-            ),
-            "图片文件 (*.png *.jpg *.svg)",
-        )
-        file_info = QFileInfo(file_name)
-        if not file_info.exists():
-            return
-
-        if file_info.size() > 64 * 1024:  # 64KB
-            QMessageBox(
-                QMessageBox.Icon.Warning, "无法上传", "头像文件大小超过限制(>64KB)", parent=self
-            ).open()
-            return
-
-        member.avatar = PixmapBuilder.toBase64fromPath(file_name)
-        self.labelAvatar.setAvatar(PixmapBuilder.fromPath(file_name))
+        try:
+            file_name = PixmapBuilder.selectImageFile(self)
+            member.avatar = PixmapBuilder.toBase64fromPath(file_name)
+            self.labelAvatar.setAvatar(PixmapBuilder.fromPath(file_name))
+        except Exception:
+            pass
 
     def changeMemberName(self):
         new_name = self.textInputName.text()
@@ -209,6 +207,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         text = self.editMessageContent.toPlainText()
         if (text != "") & (client.online):
             self.handleSendMessage(text)
+            self.editMessageContent.setText("")
 
     def onButtonRequireHashClicked(self):
         if client.online:
@@ -219,8 +218,14 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         else:
             member.updateMemberHash()
 
-    def onButtonServerCreate(self):
+    def onButtonServerCreateClicked(self):
         self.dialogCreateServer.show()
+
+    def onButtonSettingsClicked(self):
+        path = os.path.join(Accord.baseDir, "config/global.ini")
+        if not QFileInfo(path).exists():
+            QMessageBox.warning(self, "Accord", "配置文件丢失")
+        os.startfile(path)
 
     def handleEnterServer(self, curIndex: QModelIndex):
         serverData: AccordData.ServerData = self.listServers.model().data(
