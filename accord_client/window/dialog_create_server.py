@@ -32,16 +32,20 @@ class DialogCreateServer(QDialog):
         self.setModal(True)
 
     def accept(self) -> None:
-        result = HttpService.create_server(
-            self.editDisplayName.text(), self.editActualName.text(), self.icon
-        )
-        if result["status"] == 0:
-            QMessageBox.information(self, "Accord", "服务器创建成功! 请重启Accord查看最新的服务器列表")
-            super().accept()
-        else:
-            QMessageBox.information(
-                self, "Accord", "服务器创建失败! 请检查参数是否正确\n" + result["msg"]
+        try:
+            result = HttpService.create_server(
+                self.editDisplayName.text(), self.editActualName.text(), self.icon
             )
+            if result["status"] == 0:
+                QMessageBox.information(self, "Accord", "服务器创建成功! 请重启Accord查看最新的服务器列表")
+                super().accept()
+            else:
+                QMessageBox.information(self, "Accord", f"服务器创建失败: \n{result['msg']}")
+        except TimeoutError:
+            QMessageBox.information(self, "Accord", f"Accord无响应")
+        except Exception:
+            pass
+
         return
 
     def closeEvent(self, e: QtGui.QCloseEvent) -> None:

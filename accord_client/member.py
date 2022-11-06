@@ -26,9 +26,14 @@ class MemberController(QObject):
         return cls._instance
 
     def updateMemberHash(self):
-        HttpService.require_hash()
-        [self._hash] = settings.get_value("UserInfo", ["hash"])
-        self.emitUpdateHash.emit(f"#{self._hash}")
+        try:
+            HttpService.require_hash()
+            [self._hash] = settings.get_value("UserInfo", ["hash"])
+            self.emitUpdateHash.emit(f"#{self._hash}")
+        except TimeoutError:
+            pass
+        except Exception:
+            pass
 
     @property
     def hash(self) -> str:
