@@ -32,7 +32,7 @@ def create_server(displayName: str, actualName: str, icon: str):
 
     res = requests.post(
         f"http://{host}:{port}/create",
-        json={"name": displayName, "actualName": actualName, "icon": icon},
+        json={"displayName": displayName, "actualName": actualName, "icon": icon},
         timeout=1,
     )
 

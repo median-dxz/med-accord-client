@@ -17,7 +17,7 @@ class ServerDataModel(QAbstractListModel):
         value = self.serverList[index.row()]
         match role:
             case Qt.ItemDataRole.DisplayRole:
-                return value.showName
+                return value.displayName
             case Qt.ItemDataRole.ToolTipRole:
                 return format(value)
             case Qt.ItemDataRole.DecorationRole:

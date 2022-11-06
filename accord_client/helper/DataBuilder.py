@@ -10,7 +10,7 @@ def server(data: dict):
         hash=str(data["hash"]),
         actualName=str(data["actualName"]),
         icon=str(data["icon"]),
-        showName=str(data["showName"]),
+        displayName=str(data["displayName"]),
     )
 
 

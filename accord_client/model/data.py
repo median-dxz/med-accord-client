@@ -7,12 +7,12 @@ from enum import Enum
 @dataclass
 class ServerData:
     hash: str = field(default="")
-    showName: str = field(default="")
+    displayName: str = field(default="")
     actualName: str = field(default="")
     icon: str = field(default="")
 
     def __format__(self, __format_spec: str) -> str:
-        return f"{self.showName} - {self.actualName}#{self.hash}"
+        return f"{self.displayName} - {self.actualName}#{self.hash}"
 
 
 @dataclass
