@@ -4,6 +4,7 @@ from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtWidgets import QDialog, QLineEdit, QMessageBox
 
 from accord_client import Icons, PixmapBuilder
+from accord_client import http_service as HttpService
 from accord_client.widget.AvatarLabel import AvatarLabel
 
 
@@ -26,19 +27,30 @@ class DialogCreateServer(QDialog):
         self.editIcon.doubleClicked.connect(self.selectIcon)
 
         self.editIcon.setAvatar(PixmapBuilder.fromPath(Icons.SERVER, [24, 24]))
-        self.icon_path = ""
+        self.icon = ""
 
         self.setModal(True)
 
     def accept(self) -> None:
-        QMessageBox.information(self, "Accord", "服务器创建成功! 请重启Accord查看最新的服务器列表")
-        return super().accept()
+        result = HttpService.create_server(
+            self.editDisplayName.text(), self.editActualName.text(), self.icon
+        )
+        if result["status"] == 0:
+            QMessageBox.information(self, "Accord", "服务器创建成功! 请重启Accord查看最新的服务器列表")
+            super().accept()
+        else:
+            QMessageBox.information(
+                self, "Accord", "服务器创建失败! 请检查参数是否正确\n" + result["msg"]
+            )
+        return
 
     def closeEvent(self, e: QtGui.QCloseEvent) -> None:
         return super().closeEvent(e)
 
     def selectIcon(self):
         try:
-            self.icon_path = PixmapBuilder.selectImageFile(self)
+            icon_path = PixmapBuilder.selectImageFile(self)
+            self.icon = PixmapBuilder.toBase64fromPath(icon_path)
+            self.editIcon.setAvatar(PixmapBuilder.fromPath(icon_path))
         except Exception:
             pass
