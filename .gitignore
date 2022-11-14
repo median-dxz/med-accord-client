@@ -74,3 +74,4 @@ __pycache__
 
 # Project Specical
 **/config/*.ini
+**/cache/*

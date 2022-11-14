@@ -1,10 +1,12 @@
+import base64
+from hashlib import md5
 from datetime import datetime
 
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QGridLayout, QLabel, QSizePolicy, QTextBrowser
 
-from accord_client import Icons, PixmapBuilder
-from accord_client.model.data import MessageData
+from accord_client import Icons, PixmapBuilder, baseDir
+from accord_client.model.data import MessageData, MessageType
 from accord_client.widget.AvatarLabel import AvatarLabel
 
 StyleTextContent = """
@@ -48,7 +50,14 @@ class Message(QtWidgets.QWidget):
 
     def setMessage(self, message: MessageData):
         document = self.text_content.document()
-        document.setMarkdown(message.content)
+        if message.type == MessageType.TEXT:
+            document.setMarkdown(message.content)
+        elif message.type == MessageType.IMAGE:
+            image_data = message.content.encode("utf-8")
+            image_hash = md5(image_data).hexdigest()
+            with open(f"{baseDir}/cache/{image_hash}", "wb") as f:
+                f.write(base64.decodebytes(image_data))
+            document.setHtml(f"<img src='{baseDir}/cache/{image_hash}'/>")
         text_height = int(document.size().height())
         self.text_content.setFixedHeight(text_height)
         self.lab_avatar.setAvatar(

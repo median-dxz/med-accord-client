@@ -2,9 +2,9 @@ import base64
 import binascii
 import os
 
-from PyQt6.QtCore import QFileInfo, QSize, Qt
+from PyQt6.QtCore import QSize, Qt, QFileInfo
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
+from PyQt6.QtWidgets import QFileDialog, QWidget
 
 from accord_client import baseDir
 
@@ -59,10 +59,10 @@ def scale(pix: QPixmap, scaled) -> QPixmap:
     )
 
 
-def selectImageFile(parent:QWidget):
+def selectImageFile(parent: QWidget):
     file_name, _ = QFileDialog.getOpenFileName(
         parent,
-        "选择头像文件",
+        "选择图片",
         os.path.join(
             os.environ["userprofile"] if os.getenv("userprofile") else os.getcwd(),
             "pictures",
@@ -74,10 +74,5 @@ def selectImageFile(parent:QWidget):
         raise FileNotFoundError()
 
     file_info = QFileInfo(file_name)
-    if file_info.size() > 64 * 1024:  # 64KB
-        QMessageBox(
-            QMessageBox.Icon.Warning, "无法上传", "头像文件大小超过限制(>64KB)", parent=parent
-        ).open()
-        raise Exception("size too large")
-    
-    return file_name
+
+    return file_name, file_pix, file_info.size()

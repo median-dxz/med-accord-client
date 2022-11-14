@@ -84,6 +84,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.buttonServerLeave.clicked.connect(client.leave)
         self.buttonServerCreate.clicked.connect(self.onButtonServerCreateClicked)
         self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
+        self.buttonSendImage.clicked.connect(self.onButtonSendImageClicked)
         self.buttonRequireHash.clicked.connect(self.onButtonRequireHashClicked)
         self.buttonSettings.clicked.connect(self.onButtonSettingsClicked)
         self.labelAvatar.doubleClicked.connect(self.changeAvatar)
@@ -172,9 +173,15 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
 
     def changeAvatar(self):
         try:
-            file_name = PixmapBuilder.selectImageFile(self)
+            file_name, pix, file_size = PixmapBuilder.selectImageFile(self)
+
+            if file_size > 64 * 1024:  # 64KB
+                QMessageBox(
+                    QMessageBox.Icon.Warning, "无法上传", "头像文件大小超过限制(>64KB)", parent=self
+                ).open()
+                raise Exception("size too large")
             member.avatar = PixmapBuilder.toBase64fromPath(file_name)
-            self.labelAvatar.setAvatar(PixmapBuilder.fromPath(file_name))
+            self.labelAvatar.setAvatar(pix)
         except Exception:
             pass
 
@@ -209,10 +216,20 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             self.handleSendMessage(text)
             self.editMessageContent.setText("")
 
+    def onButtonSendImageClicked(self):
+        if not (client.online):
+            return
+        try:
+            file_name, _, _ = PixmapBuilder.selectImageFile(self)
+            byteData = PixmapBuilder.toBase64fromPath(file_name)
+            client.sendImage(byteData)
+        except Exception as e:
+            print(e)
+
     def onButtonRequireHashClicked(self):
         if client.online:
             dialog = QMessageBox(
-                QMessageBox.Icon.Warning, "更换用户hash", "更换用户hash前,请先退出当前服务器", parent=self
+                QMessageBox.Icon.Warning, "Accord", "更换用户hash前,请先退出当前服务器", parent=self
             )
             dialog.open()
         else:
@@ -265,7 +282,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
     def handleReceiveMessages(self, messages: list[AccordData.MessageData]):
         for message in messages:
             message_widget = Message(self)
-            message_widget.hide()
+            message_widget.hide()  # 降低动态插入控件在自动调整大小时的刷新闪烁
             self.layout_message.insertWidget(1, message_widget)
             message_widget.show()
             message_widget.setMessage(message)

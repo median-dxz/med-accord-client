@@ -23,6 +23,7 @@ class ClientController(QObject):
     emitUpdateMembersList = pyqtSignal(list)
     emitReceiveMessages = pyqtSignal(list)
     emitAcceptEnter = pyqtSignal()
+    emitOnUploadFile = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -94,7 +95,16 @@ class ClientController(QObject):
         self.promise.then(lambda: self.request(ActionType.ENTER))
 
     def send(self, messageText: str):
-        self.request(ActionType.SEND_MESSAGE, messageText)
+        self.request(
+            ActionType.SEND_MESSAGE, messageText, type=AccordData.MessageType.TEXT
+        )
+
+    def sendImage(self, imageData: str):
+        self.request(
+            ActionType.SEND_MESSAGE,
+            imageData,
+            type=AccordData.MessageType.IMAGE,
+        )
 
     def updateMemberList(self):
         self.request(ActionType.UPDATE_MEMBERS)
@@ -111,7 +121,7 @@ class ClientController(QObject):
 
     def consume(self, header: protocol.ProtocolHeader, body: bytes):
         decode_body = body.decode("utf8")
-        print(decode_body, header.Action)
+        print(header.Action, len(decode_body))
         match header.Action:
             case ActionType.ACCEPT:
                 actionData: AccordAction.ActionAccept = json.loads(
@@ -159,6 +169,7 @@ class ClientController(QObject):
                         avatar=member.avatar,
                         name=member.name,
                         content=body_arg[0],
+                        type=kw_args["type"],
                     ),
                     cls=AccordData.MessageEncoder,
                     ensure_ascii=False,

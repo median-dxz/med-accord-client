@@ -53,8 +53,14 @@ class DialogCreateServer(QDialog):
 
     def selectIcon(self):
         try:
-            icon_path = PixmapBuilder.selectImageFile(self)
-            self.icon = PixmapBuilder.toBase64fromPath(icon_path)
-            self.editIcon.setAvatar(PixmapBuilder.fromPath(icon_path))
+            icon_path, icon, size = PixmapBuilder.selectImageFile(self)
+            if size > 64 * 1024:  # 64KB
+                QMessageBox(
+                    QMessageBox.Icon.Warning, "无法上传", "图标文件大小超过限制(>64KB)", parent=self
+                ).open()
+                raise Exception("size too large")
+            else:
+                self.icon = PixmapBuilder.toBase64fromPath(icon_path)
+                self.editIcon.setAvatar(icon)
         except Exception:
             pass
