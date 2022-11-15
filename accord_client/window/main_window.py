@@ -13,6 +13,7 @@ import accord_client.model.data as AccordData
 import accord_client.model.model as AccordModel
 from accord_client import DataBuilder, PixmapBuilder, SignalWaiter
 from accord_client import http_service as HttpService
+from accord_client import data_cache as ImageCache
 from accord_client.client import ClientController
 from accord_client.member import MemberController
 from accord_client.ui import ui_main
@@ -78,6 +79,8 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             button, QMessageBox.ButtonRole.AcceptRole
         )
 
+        self.browserMessageContent.setMarkdown("**预览模式:** <br/>")
+
     def connectSlot(self):
         self.listServers.doubleClicked.connect(self.onServerListDoubleClicked)
         self.buttonServerEnter.clicked.connect(self.onButtonServerEnterClicked)
@@ -87,6 +90,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.buttonSendImage.clicked.connect(self.onButtonSendImageClicked)
         self.buttonRequireHash.clicked.connect(self.onButtonRequireHashClicked)
         self.buttonSettings.clicked.connect(self.onButtonSettingsClicked)
+        self.buttonClearCache.clicked.connect(self.onButtonClearCacheClicked)
         self.labelAvatar.doubleClicked.connect(self.changeAvatar)
         self.textInputName.editingFinished.connect(self.changeMemberName)
 
@@ -244,6 +248,13 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             QMessageBox.warning(self, "Accord", "配置文件丢失")
         os.startfile(path)
 
+    def onButtonClearCacheClicked(self):
+        cache_path = os.path.join(Accord.baseDir, "cache")
+        file_list = os.listdir(cache_path)
+        for file_name in file_list:
+            os.remove(os.path.join(cache_path, file_name))
+        self.setStatusLabel("完成", "清除缓存")
+
     def handleEnterServer(self, curIndex: QModelIndex):
         serverData: AccordData.ServerData = self.listServers.model().data(
             curIndex, Qt.ItemDataRole.UserRole
@@ -281,7 +292,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
 
     def handleReceiveMessages(self, messages: list[AccordData.MessageData]):
         for message in messages:
-            message_widget = Message(self)
+            message_widget = Message(self.widgetMessage)
             message_widget.hide()  # 降低动态插入控件在自动调整大小时的刷新闪烁
             self.layout_message.insertWidget(1, message_widget)
             message_widget.show()

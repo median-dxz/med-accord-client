@@ -71,7 +71,7 @@ def selectImageFile(parent: QWidget):
     )
     file_pix = QPixmap(file_name)
     if file_pix.isNull():
-        raise FileNotFoundError()
+        raise FileNotFoundError(f"空文件: {file_name}")
 
     file_info = QFileInfo(file_name)
 

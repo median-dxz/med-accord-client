@@ -160,6 +160,9 @@ class Ui_AccordMainWindow(object):
         self.labelStatus.setText("")
         self.labelStatus.setObjectName("labelStatus")
         self.footerLayout.addWidget(self.labelStatus)
+        self.buttonClearCache = QtWidgets.QPushButton(self.centralwidget)
+        self.buttonClearCache.setObjectName("buttonClearCache")
+        self.footerLayout.addWidget(self.buttonClearCache)
         self.buttonSettings = QtWidgets.QPushButton(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -192,6 +195,7 @@ class Ui_AccordMainWindow(object):
         self.labelServerName.setText(_translate("AccordMainWindow", "未加入服务器"))
         self.buttonRequireHash.setText(_translate("AccordMainWindow", "更新hash"))
         self.labelHash.setText(_translate("AccordMainWindow", "# "))
+        self.buttonClearCache.setText(_translate("AccordMainWindow", "清除图片缓存"))
         self.buttonSettings.setText(_translate("AccordMainWindow", "设置"))
 
 
