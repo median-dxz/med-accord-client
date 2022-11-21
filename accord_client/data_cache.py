@@ -1,4 +1,3 @@
-import base64
 import os
 from hashlib import md5
 
@@ -12,8 +11,7 @@ def store_to_cache(byteData: bytes, key: str):
         f.write(byteData)
 
 
-def get_from_cache(dataEncoded: bytes):
-    data = base64.decodebytes(dataEncoded)
+def get_from_cache(data: bytes):
     key = md5(data).digest().hex()
     if not contain(key):
         store_to_cache(data, key)

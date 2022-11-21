@@ -34,7 +34,7 @@ class MessageData:
     avatar: str = field(default="")
     name: str = field(default="")
     date: datetime = field(default_factory=datetime.now)
-    content: str = field(default="")
+    content: bytes = field(default=b"")
 
 
 class MessageEncoder(json.JSONEncoder):
@@ -43,7 +43,7 @@ class MessageEncoder(json.JSONEncoder):
             return {
                 "index": obj.index,
                 "type": obj.type.value,
-                "content": obj.content,
+                "content": obj.content.decode("utf8"),
                 "date": int(obj.date.timestamp()),
                 "name": obj.name,
                 "avatar": obj.avatar,

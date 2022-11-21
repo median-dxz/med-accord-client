@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime
 
 import accord_client.model.data as AccordData
@@ -23,11 +24,21 @@ def accept(data: dict):
 
 
 def message(data: dict):
+    content = data["content"]
+    type = AccordData.MessageType(data["type"])
+    match type:
+        case AccordData.MessageType.IMAGE:
+            content = base64.decodebytes(content.encode("utf8"))
+        case AccordData.MessageType.TEXT:
+            content = content.encode("utf8")
+        case AccordData.MessageType.FILE:
+            content = content.encode("utf8")
+            
     return AccordData.MessageData(
         index=int(data["index"]),
         name=str(data["name"]),
         avatar=str(data["avatar"]),
-        content=str(data["content"]),
+        content=content,
         date=datetime.fromtimestamp(data["date"]),
-        type=AccordData.MessageType(data["type"]),
+        type=type,
     )

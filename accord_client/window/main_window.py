@@ -88,6 +88,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         self.buttonServerCreate.clicked.connect(self.onButtonServerCreateClicked)
         self.buttonSendMessage.clicked.connect(self.onButtonSendMessageClicked)
         self.buttonSendImage.clicked.connect(self.onButtonSendImageClicked)
+        self.buttonSendFile.clicked.connect(self.onButtonSendFileClicked)
         self.buttonRequireHash.clicked.connect(self.onButtonRequireHashClicked)
         self.buttonSettings.clicked.connect(self.onButtonSettingsClicked)
         self.buttonClearCache.clicked.connect(self.onButtonClearCacheClicked)
@@ -216,7 +217,7 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
 
     def onButtonSendMessageClicked(self):
         text = self.editMessageContent.toPlainText()
-        if (text != "") & (client.online):
+        if (text != "") and (client.online):
             self.handleSendMessage(text)
             self.editMessageContent.setText("")
 
@@ -226,9 +227,22 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
         try:
             file_name, _, _ = PixmapBuilder.selectImageFile(self)
             byteData = PixmapBuilder.toBase64fromPath(file_name)
-            client.sendImage(byteData)
+            client.sendImage(byteData.encode("utf8"))
         except Exception as e:
             print(e)
+
+    def onButtonSendFileClicked(self):
+        if not (client.online):
+            return
+        file_name, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            "选择文件",
+            ".",
+            "任意文件 (*.*)",
+        )
+        with open(file_name, "rb") as f:
+            byteData = f.read()
+        client.sendFile(byteData)
 
     def onButtonRequireHashClicked(self):
         if client.online:
@@ -265,7 +279,9 @@ class AccordMainWindow(QMainWindow, ui_main.Ui_AccordMainWindow):
             self.dialogWaitingAcceptEnter.setText(format(serverData) + "\n正在加入中...")
             self.dialogWaitingAcceptEnter.open()
 
-        if (serverData.hash != client.serverData.hash) & (client.serverData.hash != ""):
+        if (serverData.hash != client.serverData.hash) and (
+            client.serverData.hash != ""
+        ):
             self.promise = SignalWaiter(client.emitDisconnected, client.leave)
             self.promise.then(enter)
         elif client.serverData.hash == "":

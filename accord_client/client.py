@@ -96,14 +96,23 @@ class ClientController(QObject):
 
     def send(self, messageText: str):
         self.request(
-            ActionType.SEND_MESSAGE, messageText, type=AccordData.MessageType.TEXT
+            ActionType.SEND_MESSAGE,
+            messageText.encode("utf8"),
+            type=AccordData.MessageType.TEXT,
         )
 
-    def sendImage(self, imageData: str):
+    def sendImage(self, imageData: bytes):
         self.request(
             ActionType.SEND_MESSAGE,
             imageData,
             type=AccordData.MessageType.IMAGE,
+        )
+
+    def sendFile(self, fileData: bytes):
+        self.request(
+            ActionType.SEND_MESSAGE,
+            fileData,
+            type=AccordData.MessageType.FILE,
         )
 
     def updateMemberList(self):

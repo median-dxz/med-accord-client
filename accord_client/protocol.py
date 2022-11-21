@@ -74,7 +74,7 @@ class ProtocolData(QObject):
         bytesRead = 0
         bytesToRead = 4
 
-        if (self.fixedLength == 0) & (len(buf) >= bytesToRead):
+        if (self.fixedLength == 0) and (len(buf) >= bytesToRead):
             self.fixedLength = int.from_bytes(
                 buf[bytesRead : bytesRead + bytesToRead],
                 byteorder=sys.byteorder,
@@ -85,7 +85,7 @@ class ProtocolData(QObject):
         if self.fixedLength != 0:
             bytesToRead = self.fixedLength
 
-        if (self.header is None) & (len(buf) - bytesRead >= bytesToRead):
+        if (self.header is None) and (len(buf) - bytesRead >= bytesToRead):
             self.header = json.loads(
                 buf[bytesRead : bytesRead + bytesToRead].decode("utf-8"),
                 object_hook=protocol_header,
@@ -95,7 +95,7 @@ class ProtocolData(QObject):
         if not self.header is None:
             bytesToRead = self.header.ContentLength
 
-        if (self.body is None) & (len(buf) - bytesRead >= bytesToRead):
+        if (self.body is None) and (len(buf) - bytesRead >= bytesToRead):
             self.body = buf[bytesRead : bytesRead + bytesToRead]
             bytesRead += bytesToRead
             self.readyConsume.emit(self.header, self.body)
